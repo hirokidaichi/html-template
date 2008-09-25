@@ -220,7 +220,6 @@ new Test.Unit.Runner({
 	}},
 	testBenchOutput:function(){with(this){
 		var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
-		console.log(tmpl.output.toString());
 		benchmark(function(){
 			tmpl.param({
 				loop:[
