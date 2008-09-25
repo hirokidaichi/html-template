@@ -1,0 +1,249 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+	<title>Template Test</title>
+<script src="prototype.js"></script>
+<script src="unittest.js"></script>
+<script src="template.js"></script>
+<style>
+body, div, p, h1, h2, h3, ul, ol, span, a, table, td, form, img, li {
+  font-family: sans-serif;
+}
+
+body {
+  font-size:0.8em;
+}
+
+#log {
+  padding-bottom: 1em;
+  border-bottom: 2px solid #000;
+  margin-bottom: 2em;
+}
+
+#logsummary {
+  margin-bottom: 1em;
+  padding: 1ex;
+  border: 1px solid #000;
+  font-weight: bold;
+}
+
+#logtable {
+  width:100%;
+  border-collapse: collapse;
+  border: 1px dotted #666;
+}
+
+#logtable td, #logtable th {
+  text-align: left;
+  padding: 3px 8px;
+  border: 1px dotted #666;
+}
+
+#logtable .passed {
+  background-color: #cfc;
+}
+
+#logtable .failed, #logtable .error {
+  background-color: #fcc;
+}
+
+#logtable .nameCell {
+  cursor: pointer;
+}
+</style>
+<script language="javascript" type="text/javascript">
+<!--
+
+-->
+</script>
+</head>
+<body>
+<div id="testlog"></div>
+</body>
+<script language="javascript" type="text/javascript">
+<!--
+var COMPLEX_TMPL =[
+	'<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">',
+	'<head>',
+	'<meta http-equiv="Content-Type" content="text/html; charset=euc-jp"/>',
+	'<title>Test 2</title>',
+	'</head>',
+	'<body>',
+	'<h1>Test 2</h1>',
+	'<p>',
+	'<TMPL_LOOP NAME=loop>',
+	'<TMPL_IF NAME=case1>',
+	'Case-1',
+	'<TMPL_ELSE>',
+	'<TMPL_IF NAME=case2>',
+	'Case-2',
+	'<TMPL_ELSE>',
+	'<TMPL_IF NAME=case3>',
+	'Case-3',
+	'<TMPL_ELSE>',
+	'Other cases',
+	'</TMPL_IF>',
+	'</TMPL_IF>',
+	'</TMPL_IF>',
+	'</TMPL_LOOP>',
+	'</p>',
+	'</body>',
+	'</html>'
+].join('\n');
+
+new Test.Unit.Runner({
+	testNamespace:function(){with(this){
+		assert(HTML.Template				,'HTML.Template');
+		assert(HTML.Template.Element		,'HTML.Template.Element');
+		assert(HTML.Template.ROOTElement	,'HTML.Template.ROOTElement');
+		assert(HTML.Template.LOOPElement	,'HTML.Template.LOOPElement');
+		assert(HTML.Template.IFElement		,'HTML.Template.IFElement');
+		assert(HTML.Template.ELSEElement	,'HTML.Template.ELSEElement');
+		assert(HTML.Template.ELSIFElement	,'HTML.Template.ELSIFElement');
+		assert(HTML.Template.VARElement		,'HTML.Template.VARElement');
+		assert(HTML.Template.TEXTElement    ,'HTML.Template.TEXTElement');
+		assert(HTML.Template.UNLESSElement  ,'HTML.Template.UNLESSElement');
+	}},
+	testVAR:function(){with(this){
+		var x = new HTML.Template({type:'text',source:'<TMPL_VAR NAME=test1><TMPL_VAR NAME=test2><TMPL_VAR NAME=test3>'});
+		x.param({test1:1,test2:2,test3:3});
+		assertEqual(x.output(),'123');
+		x = new HTML.Template({type:'text',source:':<TMPL_VAR NAME=test1>:<TMPL_VAR NAME=test2>:<TMPL_VAR NAME=test3>:'});
+		x.param({test1:1,test2:2,test3:3});
+		assertEqual(x.output(),':1:2:3:');
+		x = new HTML.Template({type:'text',source:'\n:<TMPL_VAR NAME=test1>:<TMPL_VAR NAME=test2>:<TMPL_VAR NAME=test3>:\n'});
+		x.param({test1:1,test2:2,test3:3});
+		assertEqual(x.output(),'\n:1:2:3:\n');
+		
+		x = new HTML.Template({type:'text',source:'<TMPL_VAR NAME=test>:'});
+		x.param({});
+		assertEqual(x.output(),':');
+	}},
+	testIF:function(){with(this){
+		var x = new HTML.Template({type:'text',source:'<TMPL_IF NAME=test>hogehoge</TMPL_IF>'});
+		x.param({test:1});
+		assertEqual(x.output(),'hogehoge');
+		x.param({test:0});
+		assertEqual(x.output(),'');
+		x.param({});
+		assertEqual(x.output(),'');
+	}},
+	testELSE:function(){with(this){
+		var x = new HTML.Template({type:'text',source:'<TMPL_IF NAME=test>いいいい<TMPL_ELSE>ああああ</TMPL_IF>'});
+		x.param({test:1});
+		assertEqual(x.output(),'いいいい');
+		x.param({test:0});
+		assertEqual(x.output(),'ああああ');
+		var x = new HTML.Template({type:'text',source:'<TMPL_IF NAME=test>いいいい<TMPL_ELSE><TMPL_IF NAME=test2>ぬぬぬ<TMPL_ELSE>おおお</TMPL_IF></TMPL_IF>'});
+		x.param({test:0,test2:true});
+		assertEqual(x.output(),'ぬぬぬ');
+		x.param({test:0,test2:false});
+		assertEqual(x.output(),'おおお');
+	}},
+	testUNLESS:function(){with(this){
+		var x = new HTML.Template({type:'text',source:'<TMPL_UNLESS NAME=test>いいいい<TMPL_ELSE>ああああ</TMPL_UNLESS>'});
+		x.param({test:1});
+		assertEqual(x.output(),'ああああ');
+		x.param({test:0});
+		assertEqual(x.output(),'いいいい');
+		
+		var x = new HTML.Template({type:'text',source:'<TMPL_UNLESS NAME=test>いいい<TMPL_ELSE><TMPL_UNLESS NAME=test2>ぬぬぬ<TMPL_ELSE>おおお</TMPL_UNLESS></TMPL_UNLESS>'});
+		x.param({test:0,test2:true});
+		assertEqual(x.output(),'いいい');
+		x.param({test:1,test2:false});
+		assertEqual(x.output(),'ぬぬぬ');
+	}},
+	testLOOP:function(){with(this){
+		var x = new HTML.Template({type:'text',source:'<TMPL_LOOP NAME=test>あ</TMPL_LOOP>'});
+		x.param({test:[1,2,3,4,5]});
+		assertEqual(x.output(),'あああああ');
+		var y = new HTML.Template({type:'text',source:'<TMPL_LOOP NAME=test>あ</TMPL_LOOP>'});
+		y.param({test1:[1,2,3,4,5]});
+		assertEqual(y.output(),'');
+		
+		var z = new HTML.Template({type:'text',source:'<TMPL_LOOP NAME=level1><TMPL_VAR NAME=var1><TMPL_LOOP NAME=level2><TMPL_VAR NAME=var2></TMPL_LOOP></TMPL_LOOP>'});
+		z.param({
+			level1:[
+				{var1:'hello',level2:[{var2:'world'}]},
+				{var1:'hello2',level2:[{var2:'world1'},{var2:'world2'}]}
+			]
+		});
+		assertEqual(z.output(),'helloworldhello2world1world2');
+	}},
+	testEXPR:function(){with(this){
+		var x = new HTML.Template({type:'text',source:'<TMPL_VAR EXPR="func(test)">'});
+		x.param({
+			func:function(t){return t+'::::'},
+			test:'hogehoge'
+		});
+		assertEqual(x.output(),'hogehoge::::');
+		
+		HTML.Template.registerFunction('moremore',function(){
+			return 'HELP!';
+		});
+		var x = new HTML.Template({type:'text',source:'<TMPL_VAR EXPR="moremore()">'});
+
+		assertEqual(x.output(),'HELP!');
+		
+		var x = new HTML.Template({type:'text',source:'<TMPL_LOOP EXPR="func(test)">i</TMPL_LOOP>'});
+		x.param({
+			func:function(t){return [t,t,t,t,t,t,t,t,t,t];},
+			test:10
+		});
+		assertEqual(x.output(),'iiiiiiiiii');
+		
+		var y = new HTML.Template({type:'text',source:'<TMPL_IF EXPR="func(test)">i<TMPL_ELSIF EXPR="test">love</TMPL_IF>'});
+		y.param({
+			func:function(t){return !t;},
+			test:false
+		});
+		assertEqual(y.output(),'i');
+		y.param({
+			func:function(t){return !t;},
+			test:true
+		});
+		assertEqual(y.output(),'love');
+		var z = new HTML.Template({type:'text',source:'<TMPL_UNLESS EXPR="func(test)">love</TMPL_UNLESS>'});
+		z.param({
+			test:true
+		});
+		z.registerFunction('func',function(t){return !t;});
+		assertEqual(z.output(),'love');
+		
+		
+	}},
+	testBenchCompile:function(){with(this){
+		benchmark(function(){
+			new HTML.Template({type:'text',source:COMPLEX_TMPL});
+		},100);
+	}},
+	testBenchOutput:function(){with(this){
+		var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
+		benchmark(function(){
+			tmpl.param({
+				loop:[
+					{case1:true,case2:true,case3:false},
+					{case1:true,case2:true,case3:false},
+					{case1:true,case2:true,case3:false},
+					{case1:true,case2:true,case3:false}
+				]
+			});
+			tmpl.output();
+		},100);
+	}},
+	testBenchExpr:function(){with(this){
+		var tmpl = new HTML.Template({type:'text',source:'<TMPL_VAR EXPR="addValue(x,10)"><TMPL_VAR EXPR="addValue(x,20)">'});
+		benchmark(function(){
+			tmpl.param({
+				addValue:function(a,b){return a+b;},
+				x:100
+			});
+			tmpl.output();
+		},1000);
+	}},
+});
+
+-->
+</script>
+</html>
