@@ -3,7 +3,7 @@ if(parseInt(Prototype.Version) >1.6)throw('HTML.Template require prototype.js');
 
 var HTML ={};
 HTML.Template = Class.create();
-HTML.Template.Version = '0.1';
+HTML.Template.Version = '0.2';
 HTML.Template.CHUNK_REGEXP = new RegExp('<(\\/)?TMPL_(VAR|LOOP|IF|ELSE|ELSIF|UNLESS)(\\s(NAME)=?(\\w+)|\\s(EXPR)="([^"]+)")?>');
 HTML.Template.TRUE_FUNC    = function() {return true;}
 HTML.Template.FALSE_FUNC   = function() {return false;}
