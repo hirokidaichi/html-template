@@ -58,19 +58,6 @@ HTML.Template.Element.prototype = {
   	}
   	if(this.hasExpr){
   		return this.exprFunc(param);
-		/*
-  		with(HTML.Template.GLOBAL_FUNC){with(param){
-  			var retValue;
-  			try{
-  			  eval('retValue='+this.expr);
-  			}catch(e){
-  			  console.log(e);
-  			}
-  			if(Object.isUndefined(retValue)){
-  				return false;
-  			}
-  			return retValue;
-  		}}*/
   	}
   }
 };
