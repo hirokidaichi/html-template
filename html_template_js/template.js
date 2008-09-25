@@ -138,7 +138,7 @@ Object.extend(HTML.Template, {
     	}else{
     		return '}else{';
     	}
-    },
+    }
   }),
   TEXTElement: Class.create(HTML.Template.Element, {
     type: 'text',
@@ -160,7 +160,7 @@ HTML.Template.ELSIFElement = Class.create(HTML.Template.IFElement, {
     	}else{
     		return '}else if('+this.getCondition()+'){';
     	}
-  },
+  }
 });
 HTML.Template.UNLESSElement = Class.create(HTML.Template.IFElement, {
   type: 'unless',
