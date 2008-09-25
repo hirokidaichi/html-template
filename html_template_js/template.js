@@ -27,11 +27,11 @@ HTML.Template.Element.prototype = {
       }.bind(this));
       if(this.hasExpr){
       	var func = new Function('param',[
-      	  'with(HTML.Template.GLOBAL_FUNC){with(param){',
+      	  'with(HTML.Template.GLOBAL_FUNC){with(this.parent._funcs){with(param){',
       	  'var retValue ='+this.expr+';',
       	  'if(Object.isUndefined(retValue))return false;',
       	  'return retValue;',
-      	  '}}'
+      	  '}}}'
       	].join(''));
       	this.exprFunc = func;
       }
@@ -168,11 +168,12 @@ HTML.Template.prototype = {
       this._source = option['source'];
     }
     this._param  = {};
+    this._funcs  = {};
     this._chunks = [];
     this.parse().compile();
   },
   registerFunction:function(name,func){
-  	this._param[name]=func;
+  	this._funcs[name]=func;
   },
   param: function(obj) {
     if (Object.isArray(obj)) {
@@ -207,7 +208,8 @@ HTML.Template.prototype = {
         name: results[5],
         closeTag: (results[1]) ? true: false,
         hasExpr: (results[6]) ? true: false,
-        expr :results[7]
+        expr :results[7],
+	parent:this
       }));
       source = source.slice(results[0].length);
     };
