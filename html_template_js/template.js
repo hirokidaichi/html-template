@@ -5,12 +5,6 @@ var HTML = {};
 HTML.Template = Class.create();
 HTML.Template.Version = '0.2';
 HTML.Template.CHUNK_REGEXP = new RegExp('<(\\/)?TMPL_(VAR|LOOP|IF|ELSE|ELSIF|UNLESS)(\\s(NAME)=?(\\w+)|\\s(EXPR)="([^"]+)")?>');
-HTML.Template.TRUE_FUNC = function() {
-  return true;
-}
-HTML.Template.FALSE_FUNC = function() {
-  return false;
-}
 HTML.Template.GLOBAL_FUNC = {};
 
 HTML.Template.createElement = function(type, option) {
@@ -29,10 +23,6 @@ HTML.Template.Element.prototype = {
       $H(option).each(function(e) {
         this[e[0]] = e[1];
       }.bind(this));
-      if (this.hasExpr) {
-        var func = new Function('param', ['with(HTML.Template.GLOBAL_FUNC){with(this.parent._funcs){with(param){', 'var retValue =' + this.expr + ';', 'if(Object.isUndefined(retValue))return false;', 'return retValue;', '}}}'].join(''));
-        this.exprFunc = func;
-      }
     }
   },
   isParent: Prototype.emptyFunction,
@@ -47,32 +37,41 @@ HTML.Template.Element.prototype = {
   inspect: function() {
     return Object.toJSON(this);
   },
+  getCode: function(e){
+  	return "void(0);";
+  },
   toString: function() {
     return '<' + ((this.closeTag) ? '/': '') + this.type + ((this.hasName) ? ' NAME=': '') + ((this.name) ? this.name: '') + '>';
   },
-  getParam: function(param) {
+  getParam: function() {
     if (this.hasName) {
-      return (param[this.name]) ? param[this.name] : '';
+      return "((_TOP_LEVEL['"+this.name+"']) ? _TOP_LEVEL['"+this.name+"'] : '')";
     }
     if (this.hasExpr) {
-      return this.exprFunc(param);
+      return "(function(){with(_GLOBAL_FUNCTION){with(this._funcs){with(_TOP_LEVEL){return "+this.expr+"}}}}).apply(this)";
     }
+
   }
 };
 
 Object.extend(HTML.Template, {
   ROOTElement: Class.create(HTML.Template.Element, {
     type: 'root',
-    isParent: HTML.Template.TRUE_FUNC,
-    execute: function(param) {
-      return this.children.map(function(e) {
-        return e.execute(param)
-      }).join('');
+    getCode:function(){
+    	if(this.isClose()){
+    		return 'return _RETURN_VALUE.join("");'
+    	}else{
+    		return [
+    			'var _RETURN_VALUE=[];',
+    			'var _GLOBAL_PARAM=this._param;',
+    			'var _GLOBAL_FUNCTION=HTML.Template.GLOBAL_FUNC;',
+    			'var _TOP_LEVEL=this._param;'
+    		].join('');
+    	}
     }
   }),
   LOOPElement: Class.create(HTML.Template.Element, {
     type: 'loop',
-    isParent: HTML.Template.TRUE_FUNC,
     execute: function(param) {
       var blank = '';
       var target = this.getParam(param);
@@ -90,78 +89,83 @@ Object.extend(HTML.Template, {
         }.bind(this)).join(blank);
       }
       return blank;
+    },
+    getCode:function(){
+    	if(this.isClose()){
+    		return '}.bind(this));'
+    	}else{
+    		return [
+    			'var _LOOP_LIST =$A('+this.getParam()+');',
+    			'var _LOOP_LENGTH=_LOOP_LIST.length;',
+    			'_LOOP_LIST.each(function(_TOP_LEVEL,i){',
+            	"_TOP_LEVEL['__first__'] = (i == 0) ? true: false;",
+          		"_TOP_LEVEL['__index__'] = i;",
+          		"_TOP_LEVEL['__odd__']   = (i % 2) ? true: false;",
+          		"_TOP_LEVEL['__last__']  = (i == (_LOOP_LENGTH - 1)) ? true: false;",
+          		"_TOP_LEVEL['__inner__'] = (_TOP_LEVEL['__first__']||_TOP_LEVEL['__last__'])?false:true;"
+    		].join('');
+    	}
     }
   }),
   VARElement: Class.create(HTML.Template.Element, {
     type: 'var',
-    isParent: HTML.Template.FALSE_FUNC,
-    execute: function(param) {
-      return this.getParam(param).toString();
+    getCode:function(){
+    	if(this.isClose()){
+    		//error
+    	}else{
+    		return '_RETURN_VALUE.push('+this.getParam()+');';
+    	}
     }
   }),
   IFElement: Class.create(HTML.Template.Element, {
     type: 'if',
-    isParent: HTML.Template.TRUE_FUNC,
     getCondition: function(param) {
-      return !! this.getParam(param);
+      return "!!"+this.getParam(param);
     },
-    execute: function(param) {
-      var retValue = "";
-      var ELSE = 'else';
-      var ELSIF = 'elsif'
-      var condition = this.getCondition(param);
-
-      var length = this.children.length;
-      for (var i = 0; i < length; i++) {
-        var child = this.children[i];
-        if (child.type == ELSIF) {
-          if (condition) {
-            break;
-          } else {
-            condition = child.getCondition(param);
-          }
-        } else if (child.type ==
-        ELSE) {
-          if (condition) {
-            break;
-          } else {
-            condition = true;
-          }
-        } else {
-          if (condition) {
-            retValue += child.execute(param);
-          } else {
-            continue;
-          }
-        }
-      }
-      return retValue;
+    getCode:function(){
+    	if(this.isClose()){
+    		return '}'
+    	}else{
+    		return 'if('+this.getCondition()+'){';
+    	}
     }
   }),
   ELSEElement: Class.create(HTML.Template.Element, {
     type: 'else',
-    isParent: HTML.Template.FALSE_FUNC
-  }),
-  ELSIFElement: Class.create(HTML.Template.Element, {
-    type: 'elsif',
-    isParent: HTML.Template.FALSE_FUNC,
-    getCondition: function(param) {
-      return !! this.getParam(param);
-    }
+    getCode:function(){
+    	if(this.isClose()){
+    		//error
+    	}else{
+    		return '}else{';
+    	}
+    },
   }),
   TEXTElement: Class.create(HTML.Template.Element, {
     type: 'text',
     closeTag: false,
-    isParent: HTML.Template.FALSE_FUNC,
-    execute: function() {
-      return this.value;
+    getCode:function(){
+    	if(this.isClose()){
+    		//error
+    	}else{
+    		return '_RETURN_VALUE.push('+Object.toJSON(this.value)+');';
+    	}
     }
   })
+});
+HTML.Template.ELSIFElement = Class.create(HTML.Template.IFElement, {
+  type: 'elsif',
+  getCode:function(){
+    	if(this.isClose()){
+			//error
+    	}else{
+    		return '}else if('+this.getCondition()+'){';
+    	}
+  },
 });
 HTML.Template.UNLESSElement = Class.create(HTML.Template.IFElement, {
   type: 'unless',
   getCondition: function(param) {
-    return ! this.getParam(param);
+      return "!"+this.getParam(param);
   }
 });
 HTML.Template.prototype = {
@@ -224,28 +228,9 @@ HTML.Template.prototype = {
     return this;
   },
   compile: function() {
-    var context = [];
-    this._chunks.each(function(e) {
-      if (e.isParent()) {
-        if (e.isClose()) {
-          var parent = context.pop();
-          if (parent.type != e.type) {
-            throw ('invalid');
-          }
-        } else {
-          var parent = context.last();
-          if (parent) {
-            parent.appendChild(e);
-          }
-          context.push(e);
-        }
-      } else {
-        var parent = context.last();
-        parent.appendChild(e);
-      }
-    });
+  	this.output=Function(this._chunks.map(function(e){return e.getCode()}).join('\n'));
   },
   output: function() {
-    return this.root.execute(this._param);
+    
   }
 };

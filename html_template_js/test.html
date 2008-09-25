@@ -174,9 +174,9 @@ new Test.Unit.Runner({
 	testEXPR:function(){with(this){
 		var x = new HTML.Template({type:'text',source:'<TMPL_VAR EXPR="func(test)">'});
 		x.param({
-			func:function(t){return t+'::::'},
 			test:'hogehoge'
 		});
+		x.registerFunction('func',function(t){return t+'::::'});
 		assertEqual(x.output(),'hogehoge::::');
 		
 		HTML.Template.registerFunction('moremore',function(){
@@ -194,13 +194,13 @@ new Test.Unit.Runner({
 		assertEqual(x.output(),'iiiiiiiiii');
 		
 		var y = new HTML.Template({type:'text',source:'<TMPL_IF EXPR="func(test)">i<TMPL_ELSIF EXPR="test">love</TMPL_IF>'});
+		y.registerFunction('func',function(t){return !t;});
 		y.param({
-			func:function(t){return !t;},
 			test:false
 		});
 		assertEqual(y.output(),'i');
+		
 		y.param({
-			func:function(t){return !t;},
 			test:true
 		});
 		assertEqual(y.output(),'love');
@@ -220,6 +220,7 @@ new Test.Unit.Runner({
 	}},
 	testBenchOutput:function(){with(this){
 		var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
+		console.log(tmpl.output.toString());
 		benchmark(function(){
 			tmpl.param({
 				loop:[
@@ -234,6 +235,7 @@ new Test.Unit.Runner({
 	}},
 	testBenchExpr:function(){with(this){
 		var tmpl = new HTML.Template({type:'text',source:'<TMPL_VAR EXPR="addValue(x,10)"><TMPL_VAR EXPR="addValue(x,20)">'});
+
 		benchmark(function(){
 			tmpl.param({
 				addValue:function(a,b){return a+b;},
@@ -241,7 +243,7 @@ new Test.Unit.Runner({
 			});
 			tmpl.output();
 		},1000);
-	}},
+	}}
 });
 
 -->
