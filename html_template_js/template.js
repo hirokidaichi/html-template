@@ -11,10 +11,12 @@ HTML.Template.createProduction=function(){
   var ret = [];
   ret.push('HTML.Template.Cache={');
   for(var prop in HTML.Template.Cache){
-		ret.push("'"+prop+"':"+HTML.Template.Cache[prop].toString()+',');
+    var value = HTML.Template.Cache[prop];
+    if(Object.isFunction(value))ret.push("'"+prop+"':"+value.toString().replace(/(\n|^\s+)/mg,'')+',');
 	}
   ret.push('_fin_:undefined');
   ret.push('};');
+  document.body.innerHTML="<textarea style='width:100%;height:900px'>"+ret.join('')+"</textarea>"
   return ret.join('');
 }
 HTML.Template.createElement = function(type, option) {
@@ -77,24 +79,6 @@ Object.extend(HTML.Template, {
   }),
   LOOPElement: Class.create(HTML.Template.Element, {
     type: 'loop',
-    execute: function(param) {
-      var blank = '';
-      var target = this.getParam(param);
-      if (Object.isArray(target)) {
-        var targetLength = target.length;
-        return target.map(function(t, i) {
-          t['__first__'] = (i == 0) ? true: false;
-          t['__index__'] = i;
-          t['__odd__'] = (i % 2) ? true: false;
-          t['__last__'] = (i == (length - 1)) ? true: false;
-          t['__inner__'] = (t['__first__'] || t['__last__']) ? false: true;
-          return this.children.map(function(e) {
-            return e.execute(t)
-          }).join(blank);
-        }.bind(this)).join(blank);
-      }
-      return blank;
-    },
     getCode: function() {
       if (this.isClose()) {
         return '}.bind(this));'
