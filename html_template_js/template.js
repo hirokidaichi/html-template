@@ -3,10 +3,20 @@ if (parseInt(Prototype.Version) > 1.6) throw ('HTML.Template require prototype.j
 
 var HTML = {};
 HTML.Template = Class.create();
-HTML.Template.Version = '0.2';
+HTML.Template.Version = '0.3';
 HTML.Template.CHUNK_REGEXP = new RegExp('<(\\/)?TMPL_(VAR|LOOP|IF|ELSE|ELSIF|UNLESS)(\\s(NAME)=?(\\w+)|\\s(EXPR)="([^"]+)")?>');
 HTML.Template.GLOBAL_FUNC = {};
-
+HTML.Template.Cache ={};
+HTML.Template.createProduction=function(){
+  var ret = [];
+  ret.push('HTML.Template.Cache={');
+  for(var prop in HTML.Template.Cache){
+		ret.push("'"+prop+"':"+HTML.Template.Cache[prop].toString()+',');
+	}
+  ret.push('_fin_:undefined');
+  ret.push('};');
+  return ret.join('');
+}
 HTML.Template.createElement = function(type, option) {
   return new HTML.Template[type.toUpperCase() + 'Element'](option);
 };
@@ -37,18 +47,18 @@ HTML.Template.Element.prototype = {
   inspect: function() {
     return Object.toJSON(this);
   },
-  getCode: function(e){
-  	return "void(0);";
+  getCode: function(e) {
+    return "void(0);";
   },
   toString: function() {
     return '<' + ((this.closeTag) ? '/': '') + this.type + ((this.hasName) ? ' NAME=': '') + ((this.name) ? this.name: '') + '>';
   },
   getParam: function() {
     if (this.hasName) {
-      return "((_TOP_LEVEL['"+this.name+"']) ? _TOP_LEVEL['"+this.name+"'] : '')";
+      return "((_TOP_LEVEL['" + this.name + "']) ? _TOP_LEVEL['" + this.name + "'] : '')";
     }
     if (this.hasExpr) {
-      return "(function(){with(_GLOBAL_FUNCTION){with(this._funcs){with(_TOP_LEVEL){return "+this.expr+"}}}}).apply(this)";
+      return "(function(){with(_GLOBAL_FUNCTION){with(this._funcs){with(_TOP_LEVEL){return " + this.expr + "}}}}).apply(this)";
     }
 
   }
@@ -57,17 +67,12 @@ HTML.Template.Element.prototype = {
 Object.extend(HTML.Template, {
   ROOTElement: Class.create(HTML.Template.Element, {
     type: 'root',
-    getCode:function(){
-    	if(this.isClose()){
-    		return 'return _RETURN_VALUE.join("");'
-    	}else{
-    		return [
-    			'var _RETURN_VALUE=[];',
-    			'var _GLOBAL_PARAM=this._param;',
-    			'var _GLOBAL_FUNCTION=HTML.Template.GLOBAL_FUNC;',
-    			'var _TOP_LEVEL=this._param;'
-    		].join('');
-    	}
+    getCode: function() {
+      if (this.isClose()) {
+        return 'return _RETURN_VALUE.join("");'
+      } else {
+        return ['var _RETURN_VALUE=[];', 'var _GLOBAL_PARAM=this._param;', 'var _GLOBAL_FUNCTION=HTML.Template.GLOBAL_FUNC;', 'var _TOP_LEVEL=this._param;'].join('');
+      }
     }
   }),
   LOOPElement: Class.create(HTML.Template.Element, {
@@ -80,9 +85,9 @@ Object.extend(HTML.Template, {
         return target.map(function(t, i) {
           t['__first__'] = (i == 0) ? true: false;
           t['__index__'] = i;
-          t['__odd__']   = (i % 2) ? true: false;
-          t['__last__']  = (i == (length - 1)) ? true: false;
-          t['__inner__'] = (t['__first__']||t['__last__'])?false:true;
+          t['__odd__'] = (i % 2) ? true: false;
+          t['__last__'] = (i == (length - 1)) ? true: false;
+          t['__inner__'] = (t['__first__'] || t['__last__']) ? false: true;
           return this.children.map(function(e) {
             return e.execute(t)
           }).join(blank);
@@ -90,96 +95,107 @@ Object.extend(HTML.Template, {
       }
       return blank;
     },
-    getCode:function(){
-    	if(this.isClose()){
-    		return '}.bind(this));'
-    	}else{
-    		return [
-    			'var _LOOP_LIST =$A('+this.getParam()+');',
-    			'var _LOOP_LENGTH=_LOOP_LIST.length;',
-    			'_LOOP_LIST.each(function(_TOP_LEVEL,i){',
-            	"_TOP_LEVEL['__first__'] = (i == 0) ? true: false;",
-          		"_TOP_LEVEL['__index__'] = i;",
-          		"_TOP_LEVEL['__odd__']   = (i % 2) ? true: false;",
-          		"_TOP_LEVEL['__last__']  = (i == (_LOOP_LENGTH - 1)) ? true: false;",
-          		"_TOP_LEVEL['__inner__'] = (_TOP_LEVEL['__first__']||_TOP_LEVEL['__last__'])?false:true;"
-    		].join('');
-    	}
+    getCode: function() {
+      if (this.isClose()) {
+        return '}.bind(this));'
+      } else {
+        return ['var _LOOP_LIST =$A(' + this.getParam() + ');', 'var _LOOP_LENGTH=_LOOP_LIST.length;', '_LOOP_LIST.each(function(_TOP_LEVEL,i){', "_TOP_LEVEL['__first__'] = (i == 0) ? true: false;", "_TOP_LEVEL['__index__'] = i;", "_TOP_LEVEL['__odd__']   = (i % 2) ? true: false;", "_TOP_LEVEL['__last__']  = (i == (_LOOP_LENGTH - 1)) ? true: false;", "_TOP_LEVEL['__inner__'] = (_TOP_LEVEL['__first__']||_TOP_LEVEL['__last__'])?false:true;"].join('');
+      }
     }
   }),
   VARElement: Class.create(HTML.Template.Element, {
     type: 'var',
-    getCode:function(){
-    	if(this.isClose()){
-    		//error
-    	}else{
-    		return '_RETURN_VALUE.push('+this.getParam()+');';
-    	}
+    getCode: function() {
+      if (this.isClose()) {
+        //error
+      } else {
+        return '_RETURN_VALUE.push(' + this.getParam() + ');';
+      }
     }
   }),
   IFElement: Class.create(HTML.Template.Element, {
     type: 'if',
     getCondition: function(param) {
-      return "!!"+this.getParam(param);
+      return "!!" + this.getParam(param);
     },
-    getCode:function(){
-    	if(this.isClose()){
-    		return '}'
-    	}else{
-    		return 'if('+this.getCondition()+'){';
-    	}
+    getCode: function() {
+      if (this.isClose()) {
+        return '}'
+      } else {
+        return 'if(' + this.getCondition() + '){';
+      }
     }
   }),
   ELSEElement: Class.create(HTML.Template.Element, {
     type: 'else',
-    getCode:function(){
-    	if(this.isClose()){
-    		//error
-    	}else{
-    		return '}else{';
-    	}
+    getCode: function() {
+      if (this.isClose()) {
+        //error
+      } else {
+        return '}else{';
+      }
     }
   }),
   TEXTElement: Class.create(HTML.Template.Element, {
     type: 'text',
     closeTag: false,
-    getCode:function(){
-    	if(this.isClose()){
-    		//error
-    	}else{
-    		return '_RETURN_VALUE.push('+Object.toJSON(this.value)+');';
-    	}
+    getCode: function() {
+      if (this.isClose()) {
+        //error
+      } else {
+        return '_RETURN_VALUE.push(' + Object.toJSON(this.value) + ');';
+      }
     }
   })
 });
 HTML.Template.ELSIFElement = Class.create(HTML.Template.IFElement, {
   type: 'elsif',
-  getCode:function(){
-    	if(this.isClose()){
-			//error
-    	}else{
-    		return '}else if('+this.getCondition()+'){';
-    	}
+  getCode: function() {
+    if (this.isClose()) {
+      //error
+    } else {
+      return '}else if(' + this.getCondition() + '){';
+    }
   }
 });
 HTML.Template.UNLESSElement = Class.create(HTML.Template.IFElement, {
   type: 'unless',
   getCondition: function(param) {
-      return "!"+this.getParam(param);
+    return "!" + this.getParam(param);
   }
 });
+
 HTML.Template.prototype = {
   initialize: function(option) {
     if (! (option['type'] && option['source'])) {
       throw ('option needs {type:~~,source:~~}');
     }
-    if (option['type'] == 'text') {
-      this._source = option['source'];
-    }
     this._param = {};
     this._funcs = {};
     this._chunks = [];
-    this.parse().compile();
+    this.isCompiled = false;
+    if (option['type'] == 'text') {
+      this._source = option['source'];
+      this.compile();
+    }
+    if (option['type'] == 'url') {
+      //this._source = option['source'];
+    }
+    if (option['type'] == 'precompiled') {
+      this._output = option['source'];
+    }
+  },
+  _uniqHash: function() {
+    var source = this._source;
+    var max = (1 << 30);
+    var length = source.length;
+    var ret = 34351;
+    for (var i = 0; i < length; i++) {
+      ret *= 37;
+      ret += source.charCodeAt(i);
+      ret %= max;
+    }
+    return "HTMLTEMPLATE:" + ret.toString();
   },
   registerFunction: function(name, func) {
     this._funcs[name] = func;
@@ -228,9 +244,26 @@ HTML.Template.prototype = {
     return this;
   },
   compile: function() {
-  	this.output=Function(this._chunks.map(function(e){return e.getCode()}).join('\n'));
+    if(!this.isCompiled){
+      var uniq = this._uniqHash();
+      if(HTML.Template.Cache[uniq]){
+        this._output = HTML.Template.Cache[uniq];
+      }else{
+        this.parse();
+        var functionBody = this._chunks.map(function(e) {
+          return e.getCode()
+        }).join('');
+        this._output = Function(functionBody);
+        HTML.Template.Cache[uniq]=this._output;
+      }
+      this.isCompiled = true;
+    }
   },
   output: function() {
-    
+    if (this.isCompiled) {
+      return this._output();
+    } else {
+      throw ('before');
+    }
   }
 };
