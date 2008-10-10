@@ -13,7 +13,6 @@ if (parseInt(Prototype.Version) > 1.6) throw ('HTML.Template require prototype.j
  */
 
 RegExp.escapeCreate = function(escapeChar,expArray){
-    
     function _escape( regText){
         return (regText + '').replace(new RegExp(escapeChar,'g'), "\\");
     }
@@ -23,19 +22,16 @@ RegExp.escapeCreate = function(escapeChar,expArray){
     return new RegExp(regText);
 };
 
-
-
-
 var HTML = {};
 HTML.Template = Class.create();
 HTML.Template.Version = '0.3';
 HTML.Template.CHUNK_REGEXP  = RegExp.escapeCreate('%',[
-    "<",
-    "(%/)?",
-    "TMPL_",
+    "<",            // start
+    "(%/)?",        // is CloseTag?
+    "TMPL_",        // TMPL_ prefix
     "(VAR|LOOP|IF|ELSE|ELSIF|UNLESS)",
     "%s*",
-    "(?:",
+    "(?:",          // Attributes
         "(NAME|EXPR)=",
         "(?:",
             "'([^'>]*)'|",
@@ -46,8 +42,6 @@ HTML.Template.CHUNK_REGEXP  = RegExp.escapeCreate('%',[
     ">"
 ]);
 
-//HTML.Template.CHUNK_REGEXP = new RegExp('<(\\/)?TMPL_(VAR|LOOP|IF|ELSE|ELSIF|UNLESS)(\\s(NAME)=?(\\w+)|\\s(EXPR)="([^"]+)")?>');
-
 HTML.Template.GLOBAL_FUNC = {};
 HTML.Template.Cache ={};
 HTML.Template.createProduction=function(){
@@ -57,7 +51,6 @@ HTML.Template.createProduction=function(){
     var value = HTML.Template.Cache[prop];
     if(Object.isFunction(value))ret.push("'"+prop+"':"+value.toString().replace(/(\n|^\s+)/mg,'')+',');
   }
-
   ret.push('_fin_:undefined');
   ret.push('};');
   document.body.innerHTML="<textarea style='width:100%;height:900px'>"+ret.join('')+"</textarea>"
@@ -70,6 +63,7 @@ HTML.Template.createElement = function(type, option) {
 HTML.Template.registerFunction = function(name, func) {
   HTML.Template.GLOBAL_FUNC[name] = func;
 };
+
 HTML.Template.Element = Class.create();
 HTML.Template.Element.prototype = {
   initialize: function(option) {
@@ -79,7 +73,6 @@ HTML.Template.Element.prototype = {
       $H(option).each(function(e) {
         this[e[0]] = e[1];
       }.bind(this));
-
     }
   },
   isParent: Prototype.emptyFunction,
@@ -98,17 +91,15 @@ HTML.Template.Element.prototype = {
     return "void(0);";
   },
   toString: function() {
-    //return '<' + ((this.isClose()) ? '/': '') + this.type + ((this.hasName) ? ' NAME=': '') + ((this.name) ? this.name: '') + '>';
+    return '<' + ((this.isClose()) ? '/': '') + this.type + ((this.hasName) ? ' NAME=': '') + ((this.name) ? this.name: '') + '>';
   },
   getParam: function() {
     if (this.attributes['name']) {
       return "((_TOP_LEVEL['" + this.attributes['name'] + "']) ? _TOP_LEVEL['" + this.attributes['name'] + "'] : '')";
     }
     if (this.attributes['expr']) {
-     
       return "(function(){with(_GLOBAL_FUNCTION){with(this._funcs){with(_TOP_LEVEL){return " + this.attributes['expr'] + "}}}}).apply(this)";
     }
-
   }
 };
 
@@ -195,6 +186,16 @@ HTML.Template.UNLESSElement = Class.create(HTML.Template.IFElement, {
   }
 });
 
+HTML.Template.load =function(name,value){
+  
+
+};
+
+HTML.Template.unload = function(name){
+
+};
+
+
 HTML.Template.prototype = {
   initialize: function(option) {
     if (! (option['type'] && option['source'])) {
@@ -209,16 +210,34 @@ HTML.Template.prototype = {
       this.compile();
     }
     else if (option['type'] == 'url') {
-      //this._source = option['source'];
+       this._source = option['source'];
+       if(this._source.match(/^http:/)){
+         new Ajax.Request(this._source,{
+            method:'get',
+            onComplete:function(req){
+              
+            },
+            onError:function(){
+            
+            }
+         });
+       }
       // Ajaxリクエストによりソースをもらう。
     }
     else if (option['type'] == 'function') {
       //関数直接指定
-      this._output = option['source'];
+      if(typeof ption['source'] == 'function'){
+        this._output = option['source'];
+        this.isCompiled = true;
+      }
     }
     else if (option['type'] == 'name') {
-      //名前をつけて保存
-      this._output = option['source'];
+      //名前でロード
+      this.source = '';
+      this.storedName = option['source'];
+      if(HTML.Template.Cache[this.storedName]){
+        this._output= HTML.Template.Cache[this.storedName];
+      }
     }
     else{
       
@@ -240,6 +259,15 @@ HTML.Template.prototype = {
   },
   registerFunction: function(name, func) {
     this._funcs[name] = func;
+  },
+  methodize:function(){
+    var _func = this._output;
+    return function(param,functions){
+      var _tmp=new HTML.Template({type:'function',source:_func});
+      _tmp.param(param);
+      _tmp._funcs
+    
+    }
   },
   param: function(obj) {
     if (Object.isArray(obj)) {
@@ -292,7 +320,7 @@ HTML.Template.prototype = {
   },
   compile: function() {
     if(!this.isCompiled){
-      var uniq = this._uniqHash();
+      var uniq = this.storedName || this._uniqHash();
       if(HTML.Template.Cache[uniq]){
         this._output = HTML.Template.Cache[uniq];
       }else{
@@ -310,7 +338,7 @@ HTML.Template.prototype = {
     if (this.isCompiled) {
       return this._output();
     } else {
-      throw ('before');
+      throw ('before complie');
     }
   }
 };
