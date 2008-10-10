@@ -93,7 +93,6 @@ var COMPLEX_TMPL =[
 	'</body>',
 	'</html>'
 ].join('\n');
-var COMPLEX_TMPL_COMPILED=function anonymous() { var _RETURN_VALUE = []; var _GLOBAL_PARAM = this._param; var _GLOBAL_FUNCTION = HTML.Template.GLOBAL_FUNC; var _TOP_LEVEL = this._param; _RETURN_VALUE.push("<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"ja\" lang=\"ja\">\n<head>\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=euc-jp\"/>\n<title>Test 2</title>\n</head>\n<body>\n<h1>Test 2</h1>\n<p>\n"); var _LOOP_LIST = $A((_TOP_LEVEL.loop ? _TOP_LEVEL.loop : "")); var _LOOP_LENGTH = _LOOP_LIST.length; _LOOP_LIST.each(function (_TOP_LEVEL, i) {_TOP_LEVEL.__first__ = (i == 0) ? true : false;_TOP_LEVEL.__index__ = i;_TOP_LEVEL.__odd__ = (i % 2) ? true : false;_TOP_LEVEL.__last__ = (i == _LOOP_LENGTH - 1) ? true : false;_TOP_LEVEL.__inner__ = (_TOP_LEVEL.__first__ || _TOP_LEVEL.__last__) ? false : true;_RETURN_VALUE.push("\n");if (!!(_TOP_LEVEL.case1 ? _TOP_LEVEL.case1 : "")) {_RETURN_VALUE.push("\nCase-1\n");} else {_RETURN_VALUE.push("\n");if (!!(_TOP_LEVEL.case2 ? _TOP_LEVEL.case2 : "")) {_RETURN_VALUE.push("\nCase-2\n");} else {_RETURN_VALUE.push("\n");if (!!(_TOP_LEVEL.case3 ? _TOP_LEVEL.case3 : "")) {_RETURN_VALUE.push("\nCase-3\n");} else {_RETURN_VALUE.push("\nOther cases\n");}_RETURN_VALUE.push("\n");}_RETURN_VALUE.push("\n");}_RETURN_VALUE.push("\n");}.bind(this)); _RETURN_VALUE.push("\n</p>\n</body>\n</html>"); return _RETURN_VALUE.join(""); };
 
 new Test.Unit.Runner({
 	testNamespace:function(){with(this){
@@ -219,11 +218,6 @@ new Test.Unit.Runner({
 	testBenchCompile:function(){with(this){
 		benchmark(function(){
 			new HTML.Template({type:'text',source:COMPLEX_TMPL+Math.random()});
-		},100);
-	}},
-	testBenchPreCompile:function(){with(this){
-		benchmark(function(){
-			new HTML.Template({type:'precompiled',source:COMPLEX_TMPL_COMPILED});
 		},100);
 	}},
 	testBenchOutput:function(){with(this){

@@ -1,10 +1,53 @@
+/* 2008 Daichi Hiroki <hirokidaichi@gmail.com>
+ * HTML.Template.js is freely distributable under the terms of MIT-style license.
+ *
+ * This library requires the JavaScript Framework "Prototype" (version 1.6 or later).
+ * For details, see http://prototype.conio.net/
+/*-----------------------------------------------------------------------*/
+
 if (!Prototype) throw ('HTML.Template require prototype.js');
-if (parseInt(Prototype.Version) > 1.6) throw ('HTML.Template require prototype.js');
+if (parseInt(Prototype.Version) > 1.6) throw ('HTML.Template require prototype.js v1.6 or later');
+
+/*
+ *  util function
+ */
+
+RegExp.escapeCreate = function(escapeChar,expArray){
+    
+    function _escape( regText){
+        return (regText + '').replace(new RegExp(escapeChar,'g'), "\\");
+    }
+    var regText = $A(expArray).map(function(e){
+        return _escape(e);
+    }).join('');
+    return new RegExp(regText);
+};
+
+
+
 
 var HTML = {};
 HTML.Template = Class.create();
 HTML.Template.Version = '0.3';
-HTML.Template.CHUNK_REGEXP = new RegExp('<(\\/)?TMPL_(VAR|LOOP|IF|ELSE|ELSIF|UNLESS)(\\s(NAME)=?(\\w+)|\\s(EXPR)="([^"]+)")?>');
+HTML.Template.CHUNK_REGEXP  = RegExp.escapeCreate('%',[
+    "<",
+    "(%/)?",
+    "TMPL_",
+    "(VAR|LOOP|IF|ELSE|ELSIF|UNLESS)",
+    "%s*",
+    "(?:",
+        "(NAME|EXPR)=",
+        "(?:",
+            "'([^'>]*)'|",
+            '"([^">]*)"|',
+            "([^%s=>]*)",
+        ")",
+    ")?",
+    ">"
+]);
+
+//HTML.Template.CHUNK_REGEXP = new RegExp('<(\\/)?TMPL_(VAR|LOOP|IF|ELSE|ELSIF|UNLESS)(\\s(NAME)=?(\\w+)|\\s(EXPR)="([^"]+)")?>');
+
 HTML.Template.GLOBAL_FUNC = {};
 HTML.Template.Cache ={};
 HTML.Template.createProduction=function(){
@@ -13,7 +56,8 @@ HTML.Template.createProduction=function(){
   for(var prop in HTML.Template.Cache){
     var value = HTML.Template.Cache[prop];
     if(Object.isFunction(value))ret.push("'"+prop+"':"+value.toString().replace(/(\n|^\s+)/mg,'')+',');
-	}
+  }
+
   ret.push('_fin_:undefined');
   ret.push('};');
   document.body.innerHTML="<textarea style='width:100%;height:900px'>"+ret.join('')+"</textarea>"
@@ -35,12 +79,13 @@ HTML.Template.Element.prototype = {
       $H(option).each(function(e) {
         this[e[0]] = e[1];
       }.bind(this));
+
     }
   },
   isParent: Prototype.emptyFunction,
   execute: Prototype.emptyFunction,
   isClose: function() {
-    return this.closeTag;
+    return this['closeTag']? true : false;
   },
   appendChild: function(child) {
     if (!this.children) this.children = [];
@@ -53,14 +98,15 @@ HTML.Template.Element.prototype = {
     return "void(0);";
   },
   toString: function() {
-    return '<' + ((this.closeTag) ? '/': '') + this.type + ((this.hasName) ? ' NAME=': '') + ((this.name) ? this.name: '') + '>';
+    //return '<' + ((this.isClose()) ? '/': '') + this.type + ((this.hasName) ? ' NAME=': '') + ((this.name) ? this.name: '') + '>';
   },
   getParam: function() {
-    if (this.hasName) {
-      return "((_TOP_LEVEL['" + this.name + "']) ? _TOP_LEVEL['" + this.name + "'] : '')";
+    if (this.attributes['name']) {
+      return "((_TOP_LEVEL['" + this.attributes['name'] + "']) ? _TOP_LEVEL['" + this.attributes['name'] + "'] : '')";
     }
-    if (this.hasExpr) {
-      return "(function(){with(_GLOBAL_FUNCTION){with(this._funcs){with(_TOP_LEVEL){return " + this.expr + "}}}}).apply(this)";
+    if (this.attributes['expr']) {
+     
+      return "(function(){with(_GLOBAL_FUNCTION){with(this._funcs){with(_TOP_LEVEL){return " + this.attributes['expr'] + "}}}}).apply(this)";
     }
 
   }
@@ -162,12 +208,23 @@ HTML.Template.prototype = {
       this._source = option['source'];
       this.compile();
     }
-    if (option['type'] == 'url') {
+    else if (option['type'] == 'url') {
       //this._source = option['source'];
+      // Ajaxリクエストによりソースをもらう。
     }
-    if (option['type'] == 'precompiled') {
+    else if (option['type'] == 'function') {
+      //関数直接指定
       this._output = option['source'];
     }
+    else if (option['type'] == 'name') {
+      //名前をつけて保存
+      this._output = option['source'];
+    }
+    else{
+      
+      
+    }
+    
   },
   _uniqHash: function() {
     var source = this._source;
@@ -212,13 +269,19 @@ HTML.Template.prototype = {
         this._chunks.push(HTML.Template.createElement('text', text));
         source = source.slice(index);
       };
+      var attrs ;
+      if(results[3]){
+        var name  = results[3].toLowerCase();
+        var value = [results[4],results[5],results[6]].join('');
+        attr = {};
+        attr[name]=value;
+      }else{
+        attr = undefined;
+      }
       this._chunks.push(HTML.Template.createElement(results[2], {
-        hasName: (results[4]) ? true: false,
-        name: results[5],
-        closeTag: (results[1]) ? true: false,
-        hasExpr: (results[6]) ? true: false,
-        expr: results[7],
-        parent: this
+        'attributes': attr,
+        'closeTag'  : results[1],
+        'parent'    : this
       }));
       source = source.slice(results[0].length);
     };
