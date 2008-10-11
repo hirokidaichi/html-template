@@ -1,4 +1,4 @@
-/* 2008 Daichi Hiroki <hirokidaichi@gmail.com>
+﻿/* 2008 Daichi Hiroki <hirokidaichi@gmail.com>
  * HTML.Template.js is freely distributable under the terms of MIT-style license.
  *
  * This library requires the JavaScript Framework "Prototype" (version 1.6 or later).
@@ -8,11 +8,175 @@
 if (!Prototype) throw ('HTML.Template require prototype.js');
 if (parseInt(Prototype.Version) > 1.6) throw ('HTML.Template require prototype.js v1.6 or later');
 
-/*--doc
 
---doc*/
 var HTML = {};
-HTML.Template = Class.create();
+
+
+HTML.Template = Class.create({
+    initialize: function(option) {
+        if (! (option['type'] && option['source'])) {
+            throw ('option needs {type:~~,source:~~}');
+        }
+        this._param = {};
+        this._funcs = {};
+        this._chunks = [];
+        this.isCompiled = false;
+        if (option['type'] == 'text') {
+            this._source = option['source'];
+            this.compile();
+        }
+        else if (option['type'] == 'url') {
+            this._source = option['source'];
+            if (this._source.match(/^http:/)) {
+                new Ajax.Request(this._source, {
+                    method: 'get',
+                    onComplete: function(req) {
+
+					},
+                    onError: function() {
+
+					}
+                });
+            }
+           
+        }
+        else if (option['type'] == 'function') {
+
+            if (typeof ption['source'] == 'function') {
+                this._output = option['source'];
+                this.isCompiled = true;
+            }
+        }
+        else if (option['type'] == 'function') {
+
+            if (typeof ption['source'] == 'function') {
+                this._output = option['source'];
+                this.isCompiled = true;
+            }
+        }
+        else if (option['type'] == 'name') {
+
+            this.source = '';
+            this.storedName = option['source'];
+            if (HTML.Template.Cache[this.storedName]) {
+            	throw(this.storedName+'is already loaded');
+            }else{
+            	
+            }
+        }
+        else if (option['type'] == 'load') {
+            this.source = '';
+            this.storedName = option['source'];
+            if (HTML.Template.Cache[this.storedName]) {
+                this._output = HTML.Template.Cache[this.storedName];
+            }
+        }
+        else {
+
+		}
+
+    },
+    
+    _uniqHash: function() {
+        var source = this._source;
+        var max = (1 << 30);
+        var length = source.length;
+        var ret = 34351;
+        for (var i = 0; i < length; i++) {
+            ret *= 37;
+            ret += source.charCodeAt(i);
+            ret %= max;
+        }
+        return "autocache:" + ret.toString();
+    },
+    registerFunction: function(name, func) {
+        this._funcs[name] = func;
+    },
+    methodize: function() {
+        var _func = this._output;
+        return function(param, functions) {
+            var _tmp = new HTML.Template({
+                type: 'function',
+                source: _func
+            });
+            _tmp.param(param);
+            _tmp._funcs
+
+        }
+    },
+    param: function(obj) {
+        if (Object.isArray(obj)) {
+            throw ('template.param not array');
+        }
+
+        for (var prop in obj) {
+            this._param[prop] = obj[prop];
+        }
+    },
+    parse: function() {
+        var source = this._source;
+        this.root = HTML.Template.createElement('root', {
+            closeTag: false
+        });
+        this._chunks.push(this.root);
+        while (source.length > 0) {
+            var results = source.match(HTML.Template.CHUNK_REGEXP);
+            if (!results) {
+                this._chunks.push(HTML.Template.createElement('text', source));
+                source = '';
+                break;
+            }
+            var index = 0;
+            if ((index = source.indexOf(results[0])) > 0) {
+                var text = source.slice(0, index);
+                this._chunks.push(HTML.Template.createElement('text', text));
+                source = source.slice(index);
+            };
+            var attrs;
+            if (results[3]) {
+                var name = results[3].toLowerCase();
+                var value = [results[4], results[5], results[6]].join('');
+                attr = {};
+                attr[name] = value;
+            } else {
+                attr = undefined;
+            }
+            this._chunks.push(HTML.Template.createElement(results[2], {
+                'attributes': attr,
+                'closeTag': results[1],
+                'parent': this
+            }));
+            source = source.slice(results[0].length);
+        };
+        this._chunks.push(HTML.Template.createElement('root', {
+            closeTag: true
+        }));
+        return this;
+    },
+    compile: function() {
+        if (!this.isCompiled) {
+            var uniq = this.storedName || this._uniqHash();
+            if (HTML.Template.Cache[uniq]) {
+                this._output = HTML.Template.Cache[uniq];
+            } else {
+                this.parse();
+                var functionBody = this._chunks.map(function(e) {
+                    return e.getCode()
+                }).join('');
+                this._output = Function(functionBody);
+                HTML.Template.Cache[uniq] = this._output;
+            }
+            this.isCompiled = true;
+        }
+    },
+    output: function() {
+        if (this.isCompiled) {
+            return this._output();
+        } else {
+            throw ('before complie');
+        }
+    }
+});
 Object.extend(HTML.Template,{
 	VERSION:'0.4',
 	DEFAULT_SELECTOR:'.HTML_TEMPLATE',
@@ -60,7 +224,7 @@ Object.extend(HTML.Template,{
 	registerFunction : function(name, func) {
 		HTML.Template.GLOBAL_FUNC[name] = func;
 	},
-	preCompileBySelector:function(selector){
+	precompileBySelector:function(selector){
 		$$(selector).each(function(e){
 			var tmpl=$A(e.childNodes).select(function(m){return (m.nodeType==8)}).map(function(m){return m.data}).join('');
 			HTML.Template.load('dom:'+e.identify(),tmpl)
@@ -175,6 +339,7 @@ Object.extend(HTML.Template, {
     }
   })
 });
+
 HTML.Template.ELSIFElement = Class.create(HTML.Template.IFElement, {
   type: 'elsif',
   getCode: function() {
@@ -185,6 +350,7 @@ HTML.Template.ELSIFElement = Class.create(HTML.Template.IFElement, {
     }
   }
 });
+
 HTML.Template.UNLESSElement = Class.create(HTML.Template.IFElement, {
   type: 'unless',
   getCondition: function(param) {
@@ -197,172 +363,9 @@ HTML.Template.load =function(name,value){
 
 };
 
-HTML.Template.prototype = {
-    initialize: function(option) {
-        if (! (option['type'] && option['source'])) {
-            throw ('option needs {type:~~,source:~~}');
-        }
-        this._param = {};
-        this._funcs = {};
-        this._chunks = [];
-        this.isCompiled = false;
-        if (option['type'] == 'text') {
-            this._source = option['source'];
-            this.compile();
-        }
-        else if (option['type'] == 'url') {
-            this._source = option['source'];
-            if (this._source.match(/^http:/)) {
-                new Ajax.Request(this._source, {
-                    method: 'get',
-                    onComplete: function(req) {
 
-					},
-                    onError: function() {
 
-					}
-                });
-            }
-            // Ajaxリクエストによりソースをもらう。
-        }
-        else if (option['type'] == 'function') {
-            //関数直接指定
-            if (typeof ption['source'] == 'function') {
-                this._output = option['source'];
-                this.isCompiled = true;
-            }
-        }
-        else if (option['type'] == 'function') {
-            //関数直接指定
-            if (typeof ption['source'] == 'function') {
-                this._output = option['source'];
-                this.isCompiled = true;
-            }
-        }
-        else if (option['type'] == 'name') {
-            //名前でロード
-            this.source = '';
-            this.storedName = option['source'];
-            if (HTML.Template.Cache[this.storedName]) {
-            	throw(this.storedName+'is already loaded');
-            }else{
-            	
-            }
-        }
-        else if (option['type'] == 'load') {
-            this.source = '';
-            this.storedName = option['source'];
-            if ()
-            if (HTML.Template.Cache[this.storedName]) {
-                this._output = HTML.Template.Cache[this.storedName];
-            }
-        }
-        else {
-
-		}
-
-    },
-    _uniqHash: function() {
-        var source = this._source;
-        var max = (1 << 30);
-        var length = source.length;
-        var ret = 34351;
-        for (var i = 0; i < length; i++) {
-            ret *= 37;
-            ret += source.charCodeAt(i);
-            ret %= max;
-        }
-        return "autocache:" + ret.toString();
-    },
-    registerFunction: function(name, func) {
-        this._funcs[name] = func;
-    },
-    methodize: function() {
-        var _func = this._output;
-        return function(param, functions) {
-            var _tmp = new HTML.Template({
-                type: 'function',
-                source: _func
-            });
-            _tmp.param(param);
-            _tmp._funcs
-
-        }
-    },
-    param: function(obj) {
-        if (Object.isArray(obj)) {
-            throw ('template.param not array');
-        }
-
-        for (var prop in obj) {
-            this._param[prop] = obj[prop];
-        }
-    },
-    parse: function() {
-        var source = this._source;
-        this.root = HTML.Template.createElement('root', {
-            closeTag: false
-        });
-        this._chunks.push(this.root);
-        while (source.length > 0) {
-            var results = source.match(HTML.Template.CHUNK_REGEXP);
-            if (!results) {
-                this._chunks.push(HTML.Template.createElement('text', source));
-                source = '';
-                break;
-            }
-            var index = 0;
-            if ((index = source.indexOf(results[0])) > 0) {
-                var text = source.slice(0, index);
-                this._chunks.push(HTML.Template.createElement('text', text));
-                source = source.slice(index);
-            };
-            var attrs;
-            if (results[3]) {
-                var name = results[3].toLowerCase();
-                var value = [results[4], results[5], results[6]].join('');
-                attr = {};
-                attr[name] = value;
-            } else {
-                attr = undefined;
-            }
-            this._chunks.push(HTML.Template.createElement(results[2], {
-                'attributes': attr,
-                'closeTag': results[1],
-                'parent': this
-            }));
-            source = source.slice(results[0].length);
-        };
-        this._chunks.push(HTML.Template.createElement('root', {
-            closeTag: true
-        }));
-        return this;
-    },
-    compile: function() {
-        if (!this.isCompiled) {
-            var uniq = this.storedName || this._uniqHash();
-            if (HTML.Template.Cache[uniq]) {
-                this._output = HTML.Template.Cache[uniq];
-            } else {
-                this.parse();
-                var functionBody = this._chunks.map(function(e) {
-                    return e.getCode()
-                }).join('');
-                this._output = Function(functionBody);
-                HTML.Template.Cache[uniq] = this._output;
-            }
-            this.isCompiled = true;
-        }
-    },
-    output: function() {
-        if (this.isCompiled) {
-            return this._output();
-        } else {
-            throw ('before complie');
-        }
-    }
-};
 document.observe('dom:loaded',function(){
 	HTML.Template.precompileBySelector(HTML.Template.DEFAULT_SELECTOR);
-
+	
 });
