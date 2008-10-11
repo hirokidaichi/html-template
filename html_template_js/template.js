@@ -177,6 +177,8 @@ HTML.Template = Class.create({
         }
     }
 });
+
+
 Object.extend(HTML.Template,{
 	VERSION:'0.4',
 	DEFAULT_SELECTOR:'.HTML_TEMPLATE',
@@ -359,10 +361,25 @@ HTML.Template.UNLESSElement = Class.create(HTML.Template.IFElement, {
 });
 
 HTML.Template.load =function(name,value){
-  
-
+	new HTML.Template({
+		type:'load',
+		source:value,
+		name:name
+	});
 };
+/*
+ 
+=head1 NAME
+ 
 
+ 
+=head1 SYNOPSIS
+ 
+
+ 
+=cut
+ 
+*/
 
 
 document.observe('dom:loaded',function(){
