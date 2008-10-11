@@ -11,7 +11,7 @@ if (parseInt(Prototype.Version) > 1.6) throw ('HTML.Template require prototype.j
 /*--doc
 
 --doc*/
-var HTML = HTML || {};
+var HTML = {};
 HTML.Template = Class.create();
 Object.extend(HTML.Template,{
 	VERSION:'0.4',
@@ -223,24 +223,24 @@ HTML.Template.prototype = {
 					}
                 });
             }
-            // Ajax¥ê¥¯¥¨¥¹¥È¤Ë¤è¤ê¥½¡¼¥¹¤ò¤â¤é¤¦¡£
+            // Ajaxãƒªã‚¯ã‚¨ã‚¹ãƒˆã«ã‚ˆã‚Šã‚½ãƒ¼ã‚¹ã‚’ã‚‚ã‚‰ã†ã€‚
         }
         else if (option['type'] == 'function') {
-            //´Ø¿ôÄ¾ÀÜ»ØÄê
+            //é–¢æ•°ç›´æ¥æŒ‡å®š
             if (typeof ption['source'] == 'function') {
                 this._output = option['source'];
                 this.isCompiled = true;
             }
         }
         else if (option['type'] == 'function') {
-            //´Ø¿ôÄ¾ÀÜ»ØÄê
+            //é–¢æ•°ç›´æ¥æŒ‡å®š
             if (typeof ption['source'] == 'function') {
                 this._output = option['source'];
                 this.isCompiled = true;
             }
         }
         else if (option['type'] == 'name') {
-            //Ì¾Á°¤Ç¥í¡¼¥É
+            //åå‰ã§ãƒ­ãƒ¼ãƒ‰
             this.source = '';
             this.storedName = option['source'];
             if (HTML.Template.Cache[this.storedName]) {
