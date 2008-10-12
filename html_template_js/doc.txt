@@ -1,0 +1,27 @@
+NAME HTML.Template in JavaScript
+SYNOPSIS
+    HTML::Template (in perl)のJavascript実装
+    http://search.cpan.org/~samtregar/HTML-Template/Template.pm
+
+SUPPORT_SYNTAX
+  SUPPORT_TAGS
+            <TMPL_VAR NAME="***">
+
+            <TMPL_LOOP NAME='***'></TMPL_LOOP>
+
+            <TMPL_IF NAME="***">
+        
+            <TMPL_ELSIF NAME="***">
+        
+            <TMPL_ELSE>
+        
+            </TMPL_IF>
+
+            <TMPL_VAR EXPR="***">
+        
+            <TMPL_UNLESS NAME=>
+        
+  SUPPORT_ATTRIBUTE
+Class Method
+Constructor
+Instance Method
