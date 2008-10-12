@@ -1,6 +1,6 @@
 ﻿/* 2008 Daichi Hiroki <hirokidaichi@gmail.com>
  * HTML.Template.js is freely distributable under the terms of MIT-style license.
- *
+ * ( http://htmltemplatejs.googlecode.com )
  * This library requires the JavaScript Framework "Prototype" (version 1.6 or later).
  * For details, see http://prototype.conio.net/
 /*-----------------------------------------------------------------------*/
@@ -10,6 +10,7 @@ if (parseInt(Prototype.Version) > 1.6) throw ('HTML.Template require prototype.j
 
 
 var HTML = {};
+
 
 
 HTML.Template = Class.create({
@@ -32,10 +33,10 @@ HTML.Template = Class.create({
                     method: 'get',
                     onComplete: function(req) {
 
-					},
+                    },
                     onError: function() {
 
-					}
+                    }
                 });
             }
            
@@ -180,58 +181,58 @@ HTML.Template = Class.create({
 
 
 Object.extend(HTML.Template,{
-	VERSION:'0.4',
-	DEFAULT_SELECTOR:'.HTML_TEMPLATE',
-	CHUNK_REGEXP:(function(escapeChar,expArray){
-	    function _escape( regText){
-	        return (regText + '').replace(new RegExp(escapeChar,'g'), "\\");
-	    }
-	    var regText = $A(expArray).map(function(e){
-	        return _escape(e);
-	    }).join('');
-	    return new RegExp(regText);
-	})('%',[
-	    "<",            	// start
-	    "(%/)?",        	// is CloseTag?
-	    "TMPL_",        	// TMPL_ prefix
-	    "(VAR|LOOP|IF|ELSE|ELSIF|UNLESS)",
-	    "%s*",				//
-	    "(?:",          	// Attributes
-	        "(NAME|EXPR)=", //
-	        "(?:",			//
-	            "'([^'>]*)'|",//
-	            '"([^">]*)"|',//
-	            "([^%s=>]*)",//
-	        ")",//
-	    ")?",//
-	    ">"//
-	]),
-	GLOBAL_FUNC : {},
-	Cache :{},
-	createProduction:function() {
-	    var ret = [];
-	    ret.push('HTML.Template.Cache={');
-	    for (var prop in HTML.Template.Cache) {
-	        var value = HTML.Template.Cache[prop];
-	        if (Object.isFunction(value)) ret.push("'" + prop + "':" + value.toString().replace(/(\n|^\s+)/mg, '') + ',');
-	    }
-	    ret.push('_fin_:undefined');
-	    ret.push('};');
-	    document.body.innerHTML = "<textarea style='width:100%;height:900px'>" + ret.join('') + "</textarea>"
-	    return ret.join('');
-	},
-	createElement : function(type, option) {
-		return new HTML.Template[type.toUpperCase() + 'Element'](option);
-	},
-	registerFunction : function(name, func) {
-		HTML.Template.GLOBAL_FUNC[name] = func;
-	},
-	precompileBySelector:function(selector){
-		$$(selector).each(function(e){
-			var tmpl=$A(e.childNodes).select(function(m){return (m.nodeType==8)}).map(function(m){return m.data}).join('');
-			HTML.Template.load('dom:'+e.identify(),tmpl)
-		});
-	}
+    VERSION:'0.4',
+    DEFAULT_SELECTOR:'.HTML_TEMPLATE',
+    CHUNK_REGEXP:(function(escapeChar,expArray){
+        function _escape( regText){
+            return (regText + '').replace(new RegExp(escapeChar,'g'), "\\");
+        }
+        var regText = $A(expArray).map(function(e){
+            return _escape(e);
+        }).join('');
+        return new RegExp(regText);
+    })('%',[
+        "<",                // start
+        "(%/)?",            // is CloseTag?
+        "TMPL_",            // TMPL_ prefix
+        "(VAR|LOOP|IF|ELSE|ELSIF|UNLESS)",
+        "%s*",                //
+        "(?:",              // Attributes
+            "(NAME|EXPR)=", //
+            "(?:",            //
+                "'([^'>]*)'|",//
+                '"([^">]*)"|',//
+                "([^%s=>]*)",//
+            ")",//
+        ")?",//
+        ">"//
+    ]),
+    GLOBAL_FUNC : {},
+    Cache :{},
+    createProduction:function() {
+        var ret = [];
+        ret.push('HTML.Template.Cache={');
+        for (var prop in HTML.Template.Cache) {
+            var value = HTML.Template.Cache[prop];
+            if (Object.isFunction(value)) ret.push("'" + prop + "':" + value.toString().replace(/(\n|^\s+)/mg, '') + ',');
+        }
+        ret.push('_fin_:undefined');
+        ret.push('};');
+        document.body.innerHTML = "<textarea style='width:100%;height:900px'>" + ret.join('') + "</textarea>"
+        return ret.join('');
+    },
+    createElement : function(type, option) {
+        return new HTML.Template[type.toUpperCase() + 'Element'](option);
+    },
+    registerFunction : function(name, func) {
+        HTML.Template.GLOBAL_FUNC[name] = func;
+    },
+    precompileBySelector:function(selector){
+        $$(selector).each(function(e){
+            var tmpl=$A(e.childNodes).select(function(m){return (m.nodeType==8)}).map(function(m){return m.data}).join('');
+            HTML.Template.load('dom:'+e.identify(),tmpl)
+        });
+    }
 });
 
 
@@ -372,6 +373,7 @@ HTML.Template.load =function(name,value){
 =head1 NAME
  
 
+
  
 =head1 SYNOPSIS
  
@@ -382,7 +384,10 @@ HTML.Template.load =function(name,value){
 */
 
 
+
 document.observe('dom:loaded',function(){
 	HTML.Template.precompileBySelector(HTML.Template.DEFAULT_SELECTOR);
 	
 });
+
+
