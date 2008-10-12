@@ -1,6 +1,0 @@
-todo:
-
-+<TMPL_LOOP>中の特別変数展開
-+registerFunctionのまともな実装今だとグローバルか、paramにアサインかしか用意してない。
-+構文解析のエラーフォーマットなどの追加
-+simple template実装
