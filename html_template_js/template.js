@@ -384,15 +384,47 @@ HTML.Template.load =function(name,value){
 };
 /*
  
-=head1 NAME
- 
+=head1 NAME HTML.Template in JavaScript
 
-
- 
 =head1 SYNOPSIS
- 
 
- 
+HTML::Template (in perl)のJavascript実装
+http://search.cpan.org/~samtregar/HTML-Template/Template.pm
+
+
+=head1 SUPPORT_SYNTAX
+
+=head2 SUPPORT_TAGS
+
+	<TMPL_VAR NAME="***">
+
+ 	<TMPL_LOOP NAME='***'></TMPL_LOOP>
+
+	<TMPL_IF NAME="***">
+	
+	<TMPL_ELSIF NAME="***">
+	
+	<TMPL_ELSE>
+	
+	</TMPL_IF>
+
+
+	<TMPL_VAR EXPR="***">
+	
+	<TMPL_UNLESS NAME=>
+	
+=head2 SUPPORT_ATTRIBUTE
+
+
+=head1 Class Method
+
+=head1 Constructor
+
+
+
+=head1 Instance Method
+
+
 =cut
  
 */
