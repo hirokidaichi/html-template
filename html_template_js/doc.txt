@@ -5,22 +5,22 @@ SYNOPSIS
 
 SUPPORT_SYNTAX
   SUPPORT_TAGS
-            <TMPL_VAR NAME="***">
+        <TMPL_VAR NAME="***">
 
-            <TMPL_LOOP NAME='***'></TMPL_LOOP>
+         <TMPL_LOOP NAME='***'></TMPL_LOOP>
 
-            <TMPL_IF NAME="***">
-        
-            <TMPL_ELSIF NAME="***">
-        
-            <TMPL_ELSE>
-        
-            </TMPL_IF>
+        <TMPL_IF NAME="***">
+    
+        <TMPL_ELSIF NAME="***">
+    
+        <TMPL_ELSE>
+    
+        </TMPL_IF>
 
-            <TMPL_VAR EXPR="***">
-        
-            <TMPL_UNLESS NAME=>
-        
+        <TMPL_VAR EXPR="***">
+    
+        <TMPL_UNLESS NAME=>
+    
   SUPPORT_ATTRIBUTE
 Class Method
 Constructor
