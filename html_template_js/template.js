@@ -12,17 +12,17 @@ if (parseInt(Prototype.Version) > 1.6) throw ('HTML.Template require prototype.j
 var HTML = {};
 HTML.Template = Class.create({
     initialize: function(option) {
-    	if ( Object.isString(option) ){
-    		option = {type:'name',source:option}
-    	}
-    	else if ( Object.isFunction(option) ){
-    		option = {type:'function',source:option}
-    	}
-    	else if ( Object.isElement(option) ){
-    		option = {type:'element',source:option}
-    	}
-    	
-    	if (! (option['type'] && option['source'])) {
+        if ( Object.isString(option) ){
+            option = {type:'name',source:option}
+        }
+        else if ( Object.isFunction(option) ){
+            option = {type:'function',source:option}
+        }
+        else if ( Object.isElement(option) ){
+            option = {type:'element',source:option}
+        }
+        
+        if (! (option['type'] && option['source'])) {
             throw ('option needs {type:~~,source:~~}');
         }
         
@@ -37,21 +37,21 @@ HTML.Template = Class.create({
         else if (option['type'] == 'url') {
             this._source = 'contentUnload';
             if(option['element'] && Object.isElement(option['element'])){
-            	this.assignElement = option['element'];
+                this.assignElement = option['element'];
             }
             this.storedName = "url:"+option['source'];
             new Ajax.Request(option['source'], {
                 method: 'get',
                 onComplete: function(req) {
-					this._source=req.responseText;
-					this.compile();
-					this.isCompiled = true;
-					if(this.assignElement){
-						this.assignElement.fire('htmltemplate:compiled',this);
-					}
+                    this._source=req.responseText;
+                    this.compile();
+                    this.isCompiled = true;
+                    if(this.assignElement){
+                        this.assignElement.fire('htmltemplate:compiled',this);
+                    }
                 }.bind(this),
                 onError: function() {
-					throw('cant get');
+                    throw('cant get');
                 }
             });
         }
@@ -62,12 +62,12 @@ HTML.Template = Class.create({
             }
         }
         else if (option['type'] == 'element') {
-        	var elem = $(option['source']);
+            var elem = $(option['source']);
             if ( Object.isElement(elem) ) {
-		        var tmpl=$A(elem.childNodes).select(function(m){return (m.nodeType==8)}).map(function(m){return m.data}).join('');
-		        this.storedName = 'dom:'+elem.identify()
-		        this._source = tmpl;
-		        this.compile();
+                var tmpl=$A(elem.childNodes).select(function(m){return (m.nodeType==8)}).map(function(m){return m.data}).join('');
+                this.storedName = 'dom:'+elem.identify()
+                this._source = tmpl;
+                this.compile();
                 this.isCompiled = true;
             }
         }
@@ -78,19 +78,19 @@ HTML.Template = Class.create({
                 this._output = HTML.Template.Cache[this.storedName];
                 this.isCompiled = true;
             }else{
-            	throw(option['source']+':is not found.');
+                throw(option['source']+':is not found.');
             }
         }
         else if (option['type'] == 'load') {
-        	if(!option['name']) throw('need name');
+            if(!option['name']) throw('need name');
             this._source = option['source'];
             this.storedName = option['name'];
             this.compile();
             this.isCompile = true;
         }
         else {
-			throw('invalid type');
-		}
+            throw('invalid type');
+        }
     },
     _uniqHash: function() {
         var source = this._source;
@@ -376,11 +376,11 @@ HTML.Template.UNLESSElement = Class.create(HTML.Template.IFElement, {
 });
 
 HTML.Template.load =function(name,value){
-	new HTML.Template({
-		type:'load',
-		source:value,
-		name:name
-	});
+    new HTML.Template({
+        type:'load',
+        source:value,
+        name:name
+    });
 };
 /*
  
@@ -396,23 +396,23 @@ http://search.cpan.org/~samtregar/HTML-Template/Template.pm
 
 =head2 SUPPORT_TAGS
 
-	<TMPL_VAR NAME="***">
+    <TMPL_VAR NAME="***">
 
- 	<TMPL_LOOP NAME='***'></TMPL_LOOP>
+     <TMPL_LOOP NAME='***'></TMPL_LOOP>
 
-	<TMPL_IF NAME="***">
-	
-	<TMPL_ELSIF NAME="***">
-	
-	<TMPL_ELSE>
-	
-	</TMPL_IF>
+    <TMPL_IF NAME="***">
+    
+    <TMPL_ELSIF NAME="***">
+    
+    <TMPL_ELSE>
+    
+    </TMPL_IF>
 
 
-	<TMPL_VAR EXPR="***">
-	
-	<TMPL_UNLESS NAME=>
-	
+    <TMPL_VAR EXPR="***">
+    
+    <TMPL_UNLESS NAME=>
+    
 =head2 SUPPORT_ATTRIBUTE
 
 
@@ -432,8 +432,8 @@ http://search.cpan.org/~samtregar/HTML-Template/Template.pm
 
 
 document.observe('dom:loaded',function(){
-	HTML.Template.precompileBySelector(HTML.Template.DEFAULT_SELECTOR);
-	
+    HTML.Template.precompileBySelector(HTML.Template.DEFAULT_SELECTOR);
+    
 });
 
 
