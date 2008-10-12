@@ -3,19 +3,5 @@
 use JavaScript::Minifier qw(minify); 
 use strict;
 use warnings;
-#use Perl6::Slurp qw(slurp);
-
-
-print << 'END_OF_LICENSE';
-/* 2008 Daichi Hiroki <hirokidaichi@gmail.com>
- * HTML.Template.js is freely distributable under the terms of MIT-style license.
- * ( http://htmltemplatejs.googlecode.com )
- * This library requires the JavaScript Framework "Prototype" (version 1.6 or later).
- * For details, see http://prototype.conio.net/
-/*-----------------------------------------------------------------------*/
-END_OF_LICENSE
-
-
-
 print minify(input=>*STDIN,output=>*STDOUT);
 
