@@ -5,7 +5,6 @@
  * For details, see http://prototype.conio.net/
 /*-----------------------------------------------------------------------*/
 
-﻿
 if(!Prototype)throw('HTML.Template require prototype.js');if(parseInt(Prototype.Version)>1.6)throw('HTML.Template require prototype.js v1.6 or later');var HTML={};HTML.Template=Class.create({initialize:function(option){if(!(option['type']&&option['source'])){throw('option needs {type:~~,source:~~}');}
 this._param={};this._funcs={};this._chunks=[];this.isCompiled=false;if(option['type']=='text'){this._source=option['source'];this.compile();}
 else if(option['type']=='url'){this._source=option['source'];if(this._source.match(/^http:/)){new Ajax.Request(this._source,{method:'get',onComplete:function(req){},onError:function(){}});}}

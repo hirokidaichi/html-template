@@ -1,4 +1,4 @@
-﻿/* 2008 Daichi Hiroki <hirokidaichi@gmail.com>
+/* 2008 Daichi Hiroki <hirokidaichi@gmail.com>
  * HTML.Template.js is freely distributable under the terms of MIT-style license.
  * ( http://htmltemplatejs.googlecode.com )
  * This library requires the JavaScript Framework "Prototype" (version 1.6 or later).
@@ -10,14 +10,22 @@ if (parseInt(Prototype.Version) > 1.6) throw ('HTML.Template require prototype.j
 
 
 var HTML = {};
-
-
-
 HTML.Template = Class.create({
     initialize: function(option) {
-        if (! (option['type'] && option['source'])) {
+    	if ( Object.isString(option) ){
+    		option = {type:'name',source:option}
+    	}
+    	else if ( Object.isFunction(option) ){
+    		option = {type:'function',source:option}
+    	}
+    	else if ( Object.isElement(option) ){
+    		option = {type:'element',source:option}
+    	}
+    	
+    	if (! (option['type'] && option['source'])) {
             throw ('option needs {type:~~,source:~~}');
         }
+        
         this._param = {};
         this._funcs = {};
         this._chunks = [];
@@ -27,57 +35,63 @@ HTML.Template = Class.create({
             this.compile();
         }
         else if (option['type'] == 'url') {
-            this._source = option['source'];
-            if (this._source.match(/^http:/)) {
-                new Ajax.Request(this._source, {
-                    method: 'get',
-                    onComplete: function(req) {
-
-                    },
-                    onError: function() {
-
-                    }
-                });
+            this._source = 'contentUnload';
+            if(option['element'] && Object.isElement(option['element'])){
+            	this.assignElement = option['element'];
             }
-           
+            this.storedName = "url:"+option['source'];
+            new Ajax.Request(option['source'], {
+                method: 'get',
+                onComplete: function(req) {
+					this._source=req.responseText;
+					this.compile();
+					this.isCompiled = true;
+					if(this.assignElement){
+						this.assignElement.fire('htmltemplate:compiled',this);
+					}
+                }.bind(this),
+                onError: function() {
+					throw('cant get');
+                }
+            });
         }
         else if (option['type'] == 'function') {
-
-            if (typeof ption['source'] == 'function') {
+            if (Object.isFunction(option['source'])) {
                 this._output = option['source'];
                 this.isCompiled = true;
             }
         }
-        else if (option['type'] == 'function') {
-
-            if (typeof ption['source'] == 'function') {
-                this._output = option['source'];
+        else if (option['type'] == 'element') {
+        	var elem = $(option['source']);
+            if ( Object.isElement(elem) ) {
+		        var tmpl=$A(elem.childNodes).select(function(m){return (m.nodeType==8)}).map(function(m){return m.data}).join('');
+		        this.storedName = 'dom:'+elem.identify()
+		        this._source = tmpl;
+		        this.compile();
                 this.isCompiled = true;
             }
         }
         else if (option['type'] == 'name') {
-
-            this.source = '';
-            this.storedName = option['source'];
-            if (HTML.Template.Cache[this.storedName]) {
-            	throw(this.storedName+'is already loaded');
-            }else{
-            	
-            }
-        }
-        else if (option['type'] == 'load') {
             this.source = '';
             this.storedName = option['source'];
             if (HTML.Template.Cache[this.storedName]) {
                 this._output = HTML.Template.Cache[this.storedName];
+                this.isCompiled = true;
+            }else{
+            	throw(option['source']+':is not found.');
             }
         }
+        else if (option['type'] == 'load') {
+        	if(!option['name']) throw('need name');
+            this._source = option['source'];
+            this.storedName = option['name'];
+            this.compile();
+            this.isCompile = true;
+        }
         else {
-
+			throw('invalid type');
 		}
-
     },
-    
     _uniqHash: function() {
         var source = this._source;
         var max = (1 << 30);
@@ -93,7 +107,7 @@ HTML.Template = Class.create({
     registerFunction: function(name, func) {
         this._funcs[name] = func;
     },
-    methodize: function() {
+    functionize: function() {
         var _func = this._output;
         return function(param, functions) {
             var _tmp = new HTML.Template({
@@ -101,8 +115,8 @@ HTML.Template = Class.create({
                 source: _func
             });
             _tmp.param(param);
-            _tmp._funcs
-
+            _tmp._funcs = functions;
+            return _tmp.output();
         }
     },
     param: function(obj) {
@@ -209,7 +223,7 @@ Object.extend(HTML.Template,{
     ]),
     GLOBAL_FUNC : {},
     Cache :{},
-    createProduction:function() {
+    watchCache:function() {
         var ret = [];
         ret.push('HTML.Template.Cache={');
         for (var prop in HTML.Template.Cache) {

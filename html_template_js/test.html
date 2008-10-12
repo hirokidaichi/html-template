@@ -5,7 +5,7 @@
 	<title>Template Test</title>
 <script src="lib/prototype.js"></script>
 <script src="lib/unittest.js"></script>
-<script src="template_production.js"></script>
+<script src="template.js"></script>
 
 <style>
 body, div, p, h1, h2, h3, ul, ol, span, a, table, td, form, img, li {
@@ -61,6 +61,9 @@ body {
 </head>
 <body>
 <div id="testlog"></div>
+<div id="urltest"></div>
+<div id="test01_tmpl" class="HTML_TEMPLATE">
+<!--<TMPL_LOOP NAME="loop"><TMPL_VAR NAME="test"></TMPL_LOOP>*--></div>
 </body>
 <script language="javascript" type="text/javascript">
 <!--
@@ -94,6 +97,22 @@ var COMPLEX_TMPL =[
 	'</html>'
 ].join('\n');
 
+var testURL = location.href.split("/");
+testURL.pop();
+testURL.push('tmpl/test.tmpl');
+testURL = testURL.join('/');
+$('urltest').observe('htmltemplate:compiled',function(evt){
+	var target = evt.element();
+	target.innerHTML = evt.memo.functionize()({
+		hoge:'urltest'
+	});
+}.bind(this))
+new HTML.Template({
+    type:'url',
+    source:testURL,
+    element:$('urltest')
+});
+		
 new Test.Unit.Runner({
 	testNamespace:function(){with(this){
 		assert(HTML.Template				,'HTML.Template');
@@ -213,6 +232,28 @@ new Test.Unit.Runner({
 		z.registerFunction('func',function(t){return !t;});
 		assertEqual(z.output(),'love');
 		
+		
+	}},
+	testExtra:function(){with(this){
+		var test01=new HTML.Template('dom:test01_tmpl');
+		test01.param({
+			loop:[
+				{test:1},
+				{test:2},
+				{test:3}
+			]
+		});
+		assertEqual("123*",test01.output());
+		var func = test01.functionize();
+		assertEqual("123*",func({
+			loop:[
+				{test:1},
+				{test:2},
+				{test:3}
+			]
+		}));
+		assertEqual('urltest is ok',$('urltest').innerHTML);
+
 		
 	}},
 	testBenchCompile:function(){with(this){
