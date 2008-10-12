@@ -1,9 +1,3 @@
-/* 2008 Daichi Hiroki <hirokidaichi@gmail.com>
- * HTML.Template.js is freely distributable under the terms of MIT-style license.
- * ( http://htmltemplatejs.googlecode.com )
- * This library requires the JavaScript Framework "Prototype" (version 1.6 or later).
- * For details, see http://prototype.conio.net/
-/*-----------------------------------------------------------------------*/
 
 if (!Prototype) throw ('HTML.Template require prototype.js');
 if (parseInt(Prototype.Version) > 1.6) throw ('HTML.Template require prototype.js v1.6 or later');
