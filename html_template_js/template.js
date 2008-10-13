@@ -2,7 +2,6 @@
 if (!Prototype) throw ('HTML.Template require prototype.js');
 if (parseInt(Prototype.Version) > 1.6) throw ('HTML.Template require prototype.js v1.6 or later');
 
-
 var HTML = {};
 HTML.Template = Class.create({
     initialize: function(option) {
@@ -24,6 +23,7 @@ HTML.Template = Class.create({
         this._funcs = {};
         this._chunks = [];
         this.isCompiled = false;
+        this.type = option['type'];
         if (option['type'] == 'text') {
             this._source = option['source'];
             this.compile();
@@ -37,6 +37,7 @@ HTML.Template = Class.create({
             new Ajax.Request(option['source'], {
                 method: 'get',
                 onComplete: function(req) {
+                	alert('test');
                     this._source=req.responseText;
                     this.compile();
                     this.isCompiled = true;
@@ -45,6 +46,7 @@ HTML.Template = Class.create({
                     }
                 }.bind(this),
                 onError: function() {
+                   	alert('test');
                     throw('cant get');
                 }
             });
@@ -71,13 +73,11 @@ HTML.Template = Class.create({
             if (HTML.Template.Cache[this.storedName]) {
                 this._output = HTML.Template.Cache[this.storedName];
                 this.isCompiled = true;
-            }else{
-                throw(option['source']+':is not found.');
             }
         }
         else if (option['type'] == 'load') {
             if(!option['name']) throw('need name');
-            this._source = option['source'];
+            this._source    = option['source'];
             this.storedName = option['name'];
             this.compile();
             this.isCompile = true;
@@ -174,15 +174,25 @@ HTML.Template = Class.create({
                 }).join('');
                 this._output = Function(functionBody);
                 HTML.Template.Cache[uniq] = this._output;
+
             }
             this.isCompiled = true;
         }
     },
+    checkCompiled:function(){
+        if(this.isCompiled)return true;
+        if(this.type == 'name' && this.storedName){
+            if (HTML.Template.Cache[this.storedName]) {
+                this._output = HTML.Template.Cache[this.storedName];
+                this.isCompiled = true;
+                return true;
+            }
+        }
+        return false;
+    },
     output: function() {
-        if (this.isCompiled) {
+        if (this.checkCompiled()) {
             return this._output();
-        } else {
-            throw ('before complie');
         }
     }
 });
@@ -237,8 +247,9 @@ Object.extend(HTML.Template,{
     },
     precompileBySelector:function(selector){
         $$(selector).each(function(e){
+        	
             var tmpl=$A(e.childNodes).select(function(m){return (m.nodeType==8)}).map(function(m){return m.data}).join('');
-            HTML.Template.load('dom:'+e.identify(),tmpl)
+            HTML.Template.load('dom:'+e.identify(),tmpl);
         });
     }
 });
@@ -370,6 +381,7 @@ HTML.Template.UNLESSElement = Class.create(HTML.Template.IFElement, {
 });
 
 HTML.Template.load =function(name,value){
+
     new HTML.Template({
         type:'load',
         source:value,
@@ -426,8 +438,8 @@ http://search.cpan.org/~samtregar/HTML-Template/Template.pm
 
 
 document.observe('dom:loaded',function(){
+	alert('selector');
     HTML.Template.precompileBySelector(HTML.Template.DEFAULT_SELECTOR);
-    
 });
 
 
