@@ -37,7 +37,6 @@ HTML.Template = Class.create({
             new Ajax.Request(option['source'], {
                 method: 'get',
                 onComplete: function(req) {
-                	alert('test');
                     this._source=req.responseText;
                     this.compile();
                     this.isCompiled = true;
@@ -46,7 +45,6 @@ HTML.Template = Class.create({
                     }
                 }.bind(this),
                 onError: function() {
-                   	alert('test');
                     throw('cant get');
                 }
             });
@@ -438,7 +436,6 @@ http://search.cpan.org/~samtregar/HTML-Template/Template.pm
 
 
 document.observe('dom:loaded',function(){
-	alert('selector');
     HTML.Template.precompileBySelector(HTML.Template.DEFAULT_SELECTOR);
 });
 
