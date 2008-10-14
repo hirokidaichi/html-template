@@ -111,6 +111,12 @@ HTML.Template = Class.create({
             return _tmp.output();
         }
     },
+    clearParam:function(){
+    	this._param = {};
+    },
+    clearFunctions:function(){
+    	this._funcs = {};
+    },
     param: function(obj) {
         if (Object.isArray(obj)) {
             throw ('template.param not array');
@@ -168,9 +174,14 @@ HTML.Template = Class.create({
             } else {
                 this.parse();
                 var functionBody = this._chunks.map(function(e) {
-                    return e.getCode()
+                    return e.getCode();
                 }).join('');
-                this._output = Function(functionBody);
+                try{
+                	this._output = Function(functionBody);
+                }catch(e){
+                	alert("HTML_TEMPLATE_ERROR:"+uniq+" can't compile.");
+                	
+                }
                 HTML.Template.Cache[uniq] = this._output;
 
             }
@@ -234,7 +245,7 @@ Object.extend(HTML.Template,{
         }
         ret.push('_fin_:undefined');
         ret.push('};');
-        document.body.innerHTML = "<textarea style='width:100%;height:900px'>" + ret.join('') + "</textarea>"
+        document.body.innerHTML = "<textarea style='width:100%;height:900px'>" + ret.join('') + "</textarea>";
         return ret.join('');
     },
     createElement : function(type, option) {

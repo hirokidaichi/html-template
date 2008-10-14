@@ -18,11 +18,11 @@ HTML.Component = Class.create({
     observe:function(){
     	this.topElement.observe.apply(arguments);
     },
-    param:function(){
-    	return this.viewMode().view.param.apply(arguments);
+    param:function(obj){
+    	return this.viewMode().view.param(obj);
     },
-    registerFunction:function(){
-    	return this.viewMode().view.registerFunction.apply(arguments);
+    registerFunction:function(name,func){
+    	return this.viewMode().view.registerFunction(name,func);
     },
     registerMode:function(modeName,object){
 		var tmplFunc = object['view'];
@@ -69,22 +69,6 @@ HTML.Component = Class.create({
             return this.modes[this.currentMode];
         }
     }
-    ,
-    'mode:main':{
-        view: new HTML.Template('dom:test01_tmpl'),
-        '.test/click':function(){
-        	this.viewMode('list');
-        	this.render();
-        }
-    },
-    'mode:list':{
-        view: new HTML.Template('dom:test02_tmpl'),
-        '.test/click':function(){
-        	this.viewMode('main');
-        	this.render();
-        }
-    }
-	
 });
 
 Element.addMethods({
