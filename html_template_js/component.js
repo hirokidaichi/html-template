@@ -2,7 +2,7 @@
 if (!Prototype)throw ('HTML.Template require prototype.js');
 if (!HTML.Template)throw ('HTML.Component require HTML.Template');
 
-HTML.DEFAULT_TMPL = new HTML.Template({type:'text',source:'DEFAULT_TEMPLATE'});
+
 HTML.Component = Class.create({
     initialize:function(option){
         this.modes = {};
@@ -16,48 +16,48 @@ HTML.Component = Class.create({
         }.bind(this));
     },
     observe:function(){
-    	this.topElement.observe.apply(arguments);
+        this.topElement.observe.apply(arguments);
     },
     param:function(obj){
-    	return this.viewMode().view.param(obj);
+        return this.viewMode().view.param(obj);
     },
     registerFunction:function(name,func){
-    	return this.viewMode().view.registerFunction(name,func);
+        return this.viewMode().view.registerFunction(name,func);
     },
     registerMode:function(modeName,object){
-		var tmplFunc = object['view'];
+        var tmplFunc = object['view'];
         this.modes[modeName] = {
-        	view: tmplFunc,
-        	events : $H(object).select(function(e){return e[0]!='view'}).map(function(e){
-	        	var item =e[0].split('/');
-	        	if(item.length > 1){
-	        		return {selector:item[0],event:item[1],func:e[1]};
-	        	}else{
-	        		throw('not include selector');
-	        	}
-        	})
+            view: tmplFunc,
+            events : $H(object).select(function(e){return e[0]!='view'}).map(function(e){
+                var item =e[0].split('/');
+                if(item.length > 1){
+                    return {selector:item[0],event:item[1],func:e[1]};
+                }else{
+                    throw('not include selector');
+                }
+            })
         };
     },
     _bindEvent:function(){
-    	var self = this;
-    	this.viewMode().events.each(function(e){
-    		var selector = e.selector;
-    		var eventName = e.event;
-    		var func = e.func;
-    		if(selector){
-	    		Element.select(self.topElemenmt,e.selector).each(function(item){
-	    			item.observe(eventName,func.bind(self));
-	    		});
-    		}else{
-    			self.topElement.observe(eventName,func.bind(self));	
-    		}
-    	});
+        var self = this;
+        this.viewMode().events.each(function(e){
+            var selector = e.selector;
+            var eventName = e.event;
+            var func = e.func;
+            if(selector){
+                Element.select(self.topElemenmt,e.selector).each(function(item){
+                    item.observe(eventName,func.bind(self));
+                });
+            }else{
+                self.topElement.observe(eventName,func.bind(self));    
+            }
+        });
     },
     render:function(param,functions){
         var mode = this.viewMode();
         if(mode){
-        	if(param)	 this.param(param);
-        	if(functions)this.registerFuction(functions);
+            if(param)     this.param(param);
+            if(functions)this.registerFuction(functions);
             this.topElement.innerHTML=mode.view.output();
             this._bindEvent();
         }
@@ -72,10 +72,10 @@ HTML.Component = Class.create({
 });
 
 Element.addMethods({
-	appendComponent:function(element,component){
-		if(Object.isElement(component.topElement)){
-			element.appendChild(component.topElement);
-			component.render();
-		}
-	}
+    appendComponent:function(element,component){
+        if(Object.isElement(component.topElement)){
+            element.appendChild(component.topElement);
+            component.render();
+        }
+    }
 });
