@@ -139,5 +139,5 @@
         wait    : export_wait
     });
 
-})('Mixi.Common');
+})('Namespace');
 
