@@ -1,10 +1,10 @@
 (function(ownNamespace) {
     var cache = {};
     var MESSAGE ={
-        NOREF : ':: mixi namespace error ::not found\t',
-        EXIST : ':: mixi namespace error ::overiding\t',
-        REQUIRE:':: mixi namespace error ::require\t',
-        DYNAMIC:':: mixi namespace error ::dynamic'
+        NOREF : ':: namespace error ::not found\t',
+        EXIST : ':: namespace error ::overiding\t',
+        REQUIRE:':: namespace error ::require\t',
+        DYNAMIC:':: namespace error ::dynamic'
     };
     function _truncateFQN(fqn, n) {
         var leaves = fqn.split(".");
@@ -39,6 +39,35 @@
         }
         return tmpTop;
     };
+    function export_wait(condition,func){
+        var cond = null
+        if(Object.isFunction(condition)){
+            cond = condition;
+        }
+        if(Object.isString(condition)){
+            cond = function(){
+                try{
+                    return _getNamespace(condition);
+                }catch(e){
+                    return false;
+                }
+            }
+        }
+        var check = function(sync){
+            var obj = null;
+            if( obj = cond() ){
+                
+                if(!sync){
+                    func.apply(obj);
+                    clearInterval(id);
+                }else{
+                    return true;
+                }
+            }
+        };
+        if(check(true))return true;
+        var id = setInterval( check, 30 );
+    }
     function export_createNamespace(fqn, func) {
         var leaves = fqn.split(".");
         var headLeaf = leaves[0];
@@ -58,7 +87,6 @@
             return func.apply(tmpTop);
         } else {
             return tmpTop;
-
         }
     }
     // 
@@ -106,9 +134,10 @@
     Object.extend(_createOrUse(ownNamespace),{
         createNamespace: export_createNamespace,
         depends : export_depends,
+        dynamic : export_dynamic,
         using   : export_using,
-        dynamic : export_dynamic
+        wait    : export_wait
     });
 
-})('Namespace');
+})('Mixi.Common');
 
