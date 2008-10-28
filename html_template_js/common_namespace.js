@@ -6,6 +6,15 @@
         REQUIRE:':: namespace error ::require\t',
         DYNAMIC:':: namespace error ::dynamic'
     };
+    Object.extend(_createOrUse(ownNamespace),{
+        createNamespace: export_createNamespace,
+        isLoaded: export_isLoaded,
+        depends : export_depends,
+        dynamic : export_dynamic,
+        using   : export_using,
+        wait    : export_wait
+    });
+
     function _truncateFQN(fqn, n) {
         var leaves = fqn.split(".");
         var ret = [];
@@ -99,7 +108,7 @@
             new Ajax.Request(url,{
                 method :'get',
                 onComplete:function(r){
-                    ns =export_using(fqn,func);
+                    ns = export_using(fqn,func);
                 },
                 onException:function(r,a){
                     throw new Error(  MESSAGE.DYNAMIC + fqn );
@@ -108,9 +117,42 @@
             })
         }
     }
-    function export_using(fqn, func) {
-        return (func)?func.apply(_getNamespace(fqn)):_getNamespace(fqn);
+    function _getExportedObject(list,ns){
+        var obj = {};
+        var flag = false;
+        $A(list).each(function(arg){
+            flag = true;
+            if(ns[arg]){
+                obj[arg] = ns[arg];
+            }else{
+                throw(new Error('cant export'));
+            }
+        });
+        return (flag)?obj:ns;
+    }
+    function export_using(fqn,funcOrExport) {
+        var ns = _getNamespace(fqn);
+        if(funcOrExport){
+            if(Object.isFunction(funcOrExport)){
+                var func = funcOrExport;
+                var obj  = _getExportedObject( func.argumentNames(),ns );
+                return func.apply(obj,func.argumentNames().map(function(arg){return obj[arg];}));
+            }
+            if(Object.isArray(funcOrExport)){
+                return _getExportedObject(funcOrExport,ns);
+            }
+            
+        }else{
+            return ns;
+        }
     };
+    function export_isLoaded(){
+        try{
+            return export_depends.apply(this,arguments);
+        }catch(e){
+            return false;
+        }
+    }
     function export_depends() {
         var fqn = $A(arguments).flatten();
         var ret = [];
@@ -131,13 +173,7 @@
         }
     };
 
-    Object.extend(_createOrUse(ownNamespace),{
-        createNamespace: export_createNamespace,
-        depends : export_depends,
-        dynamic : export_dynamic,
-        using   : export_using,
-        wait    : export_wait
-    });
 
-})('Namespace');
+
+})('Module');
 
