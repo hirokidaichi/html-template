@@ -6,13 +6,15 @@
         REQUIRE:':: namespace error ::require\t',
         DYNAMIC:':: namespace error ::dynamic'
     };
-    Object.extend(_createOrUse(ownNamespace),{
+    var onwNamespace = _createOrUse(ownNamespace)
+    Object.extend(ownNamespace),{
         createNamespace: export_createNamespace,
         isLoaded: export_isLoaded,
         depends : export_depends,
         dynamic : export_dynamic,
         using   : export_using,
-        wait    : export_wait
+        wait    : export_wait,
+        INCLUDE : '/static/js/'
     });
 
     function _truncateFQN(fqn, n) {
@@ -104,7 +106,7 @@
         try{
            return export_using(fqn,func);
         }catch(e){
-            var url = '/static/js/'+fqn.replace(/\./g,'::').underscore()+'.js';
+            var url = ownNamespace.INCLUDE +fqn.replace(/\./g,'::').underscore()+'.js';
             new Ajax.Request(url,{
                 method :'get',
                 onComplete:function(r){
