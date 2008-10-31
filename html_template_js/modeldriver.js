@@ -8,7 +8,7 @@ var ModelDriver = ModelDriver || {};
     Object.extend(this,{
         create     : export_create
     });
-    this.DriverClass = Class.create({
+    this.Driver = Class.create({
         initialize:function(baseUrl,option){
             this._url = baseUrl;
             this._method    = option['method_param']    || 'method';
@@ -84,7 +84,7 @@ var ModelDriver = ModelDriver || {};
         }
     });
     function export_create(url,option){
-        return new this.DriverClass(url,option);
+        return new this.Driver(url,option);
     }
 
 

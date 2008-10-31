@@ -46,6 +46,7 @@ HTML.Component = Class.create({
     send:function(){
         var args =$A(arguments);
         var name =args.shift();
+
         this.topElement.fire('component-message:'+name,args);
     },
     _bindEvent:function(){
@@ -99,6 +100,18 @@ HTML.Component.attatch=function(){
         }
     });
 };
+document.observe('dom:loaded',function(){
+    $$('[componentType]').each(function(e){
+        try{
+            var component = e.getAttribute('componentType').evalJSON();
+            HTML.Component.attatch(
+                { component:component,element:e }
+            );
+        }catch(e){
+            throw(e);
+        }
+    });
+});
 Element.addMethods({
     component:function(element){
         if(Object.isElement(element) && element._component){
@@ -109,7 +122,7 @@ Element.addMethods({
         var args = $A(arguments);
         var elem = args.shift();
         if('_component' in elem){
-            console.log(elem._component.send);
+            
             var component =elem._component;
             component.send.apply(component,args);
         }
