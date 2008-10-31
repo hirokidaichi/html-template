@@ -1,0 +1,121 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<title>Namespace Test</title>
+<script src="lib/prototype.js"></script>
+<script src="lib/unittest.js"></script>
+<script src="template.js"></script>
+<script src="common_namespace.js"></script>
+<style>
+body, div, p, h1, h2, h3, ul, ol, span, a, table, td, form, img, li {
+  font-family: sans-serif;
+}
+
+body {
+  font-size:0.8em;
+}
+
+#log {
+  padding-bottom: 1em;
+  border-bottom: 2px solid #000;
+  margin-bottom: 2em;
+}
+
+#logsummary {
+  margin-bottom: 1em;
+  padding: 1ex;
+  border: 1px solid #000;
+  font-weight: bold;
+}
+
+#logtable {
+  width:100%;
+  border-collapse: collapse;
+  border: 1px dotted #666;
+}
+
+#logtable td, #logtable th {
+  text-align: left;
+  padding: 3px 8px;
+  border: 1px dotted #666;
+}
+
+#logtable .passed {
+  background-color: #cfc;
+}
+
+#logtable .failed, #logtable .error {
+  background-color: #fcc;
+}
+
+#logtable .nameCell {
+  cursor: pointer;
+}
+</style>
+<script language="javascript" type="text/javascript">
+<!--
+
+-->
+</script>
+</head>
+<body>
+<div id="testlog"></div>
+<div id="urltest"></div>
+
+</body>
+<script language="javascript" type="text/javascript">
+<!--
+
+new Test.Unit.Runner({
+    testNamespace:function(){with(this){
+        assert('JS.Namespace',JS.Namespace );
+    }},
+    testCreate:function(){with(this){
+        var ns = JS.Namespace.createNamespace('XXX.YYY.ZZZ');
+        assertEqual(XXX.YYY.ZZZ,ns);
+        JS.Namespace.createNamespace('WWW.UUU',function(){
+            assertEqual(WWW.UUU,this);
+            this.MyClass = Class.create({
+                initialize:function(){}    
+            });
+        });
+        var flag =false;
+        try{
+            JS.Namespace.createNamespace('HTML.Template');
+        }catch(e){
+            flag =true
+        }
+        assert(flag);
+        JS.Namespace.createNamespace('WWW.UUU.MyClass.Test',function(){
+            assertEqual(WWW.UUU.MyClass.Test,this);
+        })
+    }},
+    testDepends:function(){with(this){
+        
+        assert(JS.Namespace.depends($w('HTML.Template XXX.YYY.XXX WWW.UUU WWW.UUU.MyClass.Test')));
+        assert(JS.Namespace.depends(
+            'HTML.Template',
+            'XXX.YYY.XXX',
+            'WWW.UUU',
+            'WWW.UUU.MyClass.Test'
+        ));
+
+    }},
+    testUsing:function(){with(this){
+        assertEqual(XXX.YYY.XXX,JS.Namespace.using('XXX.YYY.XXX'));
+        JS.Namespace.using('WWW.UUU',function(){
+            assertEqual(WWW.UUU,this);
+            this.test = 0;
+        });
+        assertEqual(0 ,WWW.UUU.test);
+        JS.Namespace.using('WWW.UUU',function(MyClass){
+            assert(new MyClass instanceof WWW.UUU.MyClass);
+            this.test2 = 0;
+        });
+        assertEqual(undefined ,WWW.UUU.test2);
+    }}
+});
+-->
+</script>
+</html>

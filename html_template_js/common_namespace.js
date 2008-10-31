@@ -6,21 +6,23 @@
         REQUIRE:':: namespace error ::require\t',
         DYNAMIC:':: namespace error ::dynamic'
     };
-    var onwNamespace = _createOrUse(ownNamespace)
-    Object.extend(ownNamespace),{
+    var ownNamespace = _createOrUse(ownNamespace)
+
+    Object.extend(ownNamespace,{
         createNamespace: export_createNamespace,
         isLoaded: export_isLoaded,
         depends : export_depends,
         dynamic : export_dynamic,
         using   : export_using,
         wait    : export_wait,
+        dumpCache:export_dumpCache,
         INCLUDE : '/static/js/'
     });
 
     function _truncateFQN(fqn, n) {
         var leaves = fqn.split(".");
         var ret = [];
-        for (var i = 0; i < n ; i++) {
+        for (var i = 0; i < n+1 ; i++) {
             ret.push(leaves[i]);
         }
         return ret.join('.');
@@ -36,19 +38,15 @@
     }
     function _getNamespace(fqn) {
         if (cache[fqn]) return cache[fqn];
-        var leaves = fqn.split(".");
-        var headLeaf = leaves[0];
-        var tmpTop = window;
-        var leaveLength = leaves.length;
-
-        for (var i = 0; i < leaveLength; i++) {
-            if (!tmpTop[headLeaf]) {
-                throw new Error(MESSAGE.NOREF + fqn)
+        try{
+            var ns =eval('('+fqn+')');
+            if(_canBeNamespace(ns)){
+                return ns;
             }
-            tmpTop = tmpTop[headLeaf];
-            headLeaf = leaves[i + 1];
+            throw('');
+        }catch(e){
+            throw(new Error(MESSAGE.NOREF));
         }
-        return tmpTop;
     };
     function export_wait(condition,func){
         var cond = null
@@ -79,25 +77,44 @@
         if(check(true))return true;
         var id = setInterval( check, 30 );
     }
+    function export_dumpCache(){
+        console.log(cache);
+    }
+    function _canBeNamespace(obj){
+        return (
+            Object.isUndefined(obj) || // undefined である
+            typeof obj == 'object'  || // 普通のhashオブジェクトである
+            ( Object.isFunction(obj) && obj.toString() == Class.create().toString()) // prototype.jsによるクラスである
+        )? true:false;
+    }
     function export_createNamespace(fqn, func) {
+        if(cache[fqn]) throw(new Error(MESSAGE.EXIST));
         var leaves = fqn.split(".");
-        var headLeaf = leaves[0];
         var tmpTop = window;
-        var leaveLength = leaves.length;
-        if (cache[fqn]) throw (MESSAGE.EXIST + fqn);
-        for (var i = 0; i < leaveLength; i++) {
-            if (tmpTop[headLeaf] && typeof tmpTop[headLeaf] != "object") {
-                throw new Error(MESSAGE.EXIST  + typeof tmpTop[headLeaf] + ". : " + fqn);
+        var length = leaves.length;
+        var ns = leaves.map(function(e,i){
+            if(_canBeNamespace(tmpTop[e]) ){
+                // namespaceになれる
+                var tmpFQN = _truncateFQN(fqn,i);
+                if((i == length -1) && !Object.isUndefined(tmpTop[e])){
+                    throw(new Error(MESSAGE.EXIST));
+                }else{
+                    tmpTop[e] = tmpTop[e] || {__SELF_NAMESPACE :tmpFQN};
+                }
+                cache[tmpFQN] = tmpTop[e];
+                tmpTop = tmpTop[e];
+                
+            }else{
+                // namespaceになれない
+                throw(new Error(MESSAGE.EXIST));
             }
-            tmpTop[headLeaf] = tmpTop[headLeaf] || {};
-            cache[_truncateFQN(fqn, i)] = tmpTop;
-            tmpTop = tmpTop[headLeaf];
-            headLeaf = leaves[i + 1];
-        }
+            return tmpTop; 
+        }).last();
+
         if (func) {
-            return func.apply(tmpTop);
+            return func.apply(ns);
         } else {
-            return tmpTop;
+            return ns;
         }
     }
     // 
@@ -175,7 +192,5 @@
         }
     };
 
-
-
-})('Module');
+})('JS.Namespace');
 
