@@ -66,9 +66,42 @@ body {
 </body>
 <script language="javascript" type="text/javascript">
 <!--
+FormValidator.Simple.setMessages({
+    action1 :{
+        param1 : {
+            NOT_BLANK : 'input name!',
+            LENGTH    : 'input name (length should be between 0 and 10)!',
+        },
+        param2 : {
+            DEFAULT : 'input correct email address!'
+        }
+    }
+});
 
+var results = FormValidator.Simple.check({
+        'param1':'111111',
+        'param2':'1111',
+        'mail1' :'2222',
+        'mail2' :'3333',
+        'year'  :'4444',
+        'month' :'5555',
+        'day'   :'6666',
+    },
+    [
+        "param1"    ,   ["NOT_BLANK","ASCII",["LENGTH",2,5]],
+        "param2"    ,   ["NOT_BLANK","INT"],
+        "mail1"     ,   ["NOT_BLANK","EMAIL_LOOSE"],
+        "mail2"     ,   ["NOT_BLANK","EMAIL_LOOSE"],
+        {"mails":["mail1","mail2"]}     ,   ["DUPLICATION"],
+        {"date":["year","month","day"]} ,   ["DATE"]
+    ]
+);
+console.log(results);
+//console.log(results.hasBlank());
+console.log(results.invalid('param1'));
 new Test.Unit.Runner({
     testNamespace:function(){with(this){
+    
     }}
 });
 -->

@@ -6,125 +6,263 @@
 */
 var FormValidator = FormValidator || {};
 
-(function(){
+(function(){ // Namespace in FormValidator
     var _DEFAULT_OPTION = {
         test_option : 1
     };
-    function _createObject(key,value,query){
-        return {
-            target : [key].flatten().map(function(k){
-                var ret ={};ret[k]=query[k];
-                return ret;
-            }),
-            checker: $A(value).map(function(funcs){
-                if(Object.isString(funcs)){
-                    return {func:funcs,args:[]};
-                }else if(Object.isArray(funcs)){
-                    return {func:funcs.shift(),args:funcs};
-                }
-            })
-        };
-    }
+	var asParam = function(param){
+		return function(f){return f[param];};
+	};
+    var Record = Class.create({
+    	initialize:function(key,value,query){
+		    this.data = {
+		        target :[key].flatten().map(function(k){
+		            return query[k];
+		    	}),
+		        checker: $A(value).map(function(funcs){
+		            if(Object.isString(funcs)){
+		                return {func:funcs,args:[]};
+		            }else if(Object.isArray(funcs)){
+		                return {func:funcs.shift(),args:funcs};
+		            }
+		        })
+		    };
+    	},
+    	target:function(){
+    		var target = this.data.target;
+    		return (target.length==1)?target.first():target;
+    	},
+    	evaluate:function(checker){
+    		if(!checker)return true;
+        	var func = FormValidator.Simple.Plugin[(checker.func)];
+			
+        	if(Object.isFunction(func)){
+        		var a=[0,checker.args].flatten();
+        		a[0]=this.target();
+        		var result =(func.apply(this,a))?true:false;
+        		console.log([checker.func,result].join('/'));
+        		return result;
+        	}
+        	throw('invalid function');
+    	},
+    	invalid:function(){
+    		return this.data.checker.reject(function(f){return f.func == 'NOT_BLANK'}).select(function(f){
+    			return !this.evaluate(f);
+    		}.bind(this)).map(function(f){return f.func});
+    	},
+    	isBlank:function(){
+			// NOT_BLANK のみ
+			return !this.evaluate( 
+				this.data.checker.find(function(f){return (f.func == 'NOT_BLANK')}) 
+			);
+    	},
+    	isValid:function(){
+    	
+    	},
+    	isInvalid:function(){
+    		return this.data.checker.reject(function(f){return f.func == 'NOT_BLANK'}).find(function(f){
+    			return !this.evaluate(f);
+    		}.bind(this));
+    		//return true;
+    	}
+    });
+
     this.Simple = Class.create({
         initialize:function(option){
             this.option = Object.extend(_DEFAULT_OPTION,option);
+            this._results = new FormValidator.Simple.Results();
+        },
+        results:function(){
+        	return this._results;
         },
         check :function(query,condition){
-            var obj = {};
-            
             for(var i = 0,cl = condition.length;i<cl;){
                 var key   = condition[i++];
                 var value = condition[i++];
                 if(Object.isString(key)){
-                    obj[key] = _createObject(key,value,query);
+                    this.results().setRecord(key,new Record(key,value,query));
                 }else{
-                    for(var prop in key) break;//get first prop
-                    obj[prop] =  _createObject(key,value,query);
-
+                    for(var prop in key){ break;}//get first prop
+                    this.results().setRecord(prop,new Record(key[prop],value,query));
                 }
             }
-            return this.evaluate(query,obj);
+            return this.results();
         },
-        evaluate:function(query,obj){
-            var _self = this;
-            $H(obj).each(function(e){
-                console.log(e[1]);
-                var data = e[1]
-                $A(data.checker || []).each(function(f){
-                
-                });
-            });
+        setMessages:function(obj){
+        	this._messages =obj;
+        	this._results.messages(obj);
         }
     });
-    (function(){
-        this.Results = Class.create({});
-        this.Message = Class.create({});
-        
+    (function(){ // namespace as FormValidator.Simple
+
+        this.Results = Class.create({
+        	initialize:function(message){
+        		this._data={};
+        	},
+        	setRecord:function(key,result){
+        		this._data[key] = result;
+        	},
+        	messages:function(m){
+        		if(m){
+        		
+        		}else{
+        			
+        		}
+        	},
+        	hasBlank:function(){
+        		// NOT_BLANK
+        		var data = this._data;
+        		for( var key in data ){
+        			if(data[key].isBlank())return true ;
+        		}
+        		return false;
+        	},
+        	hasInvalid:function(){
+        		// NOT_BLANK以外
+        		var data = this._data;
+        		for( var key in data ){
+        			if(data[key].isInvalid())return true ;
+        		}
+        		return false;
+        	},
+        	hasError:function(){
+        		// すべて
+        		return ( this.hasBlank() || this.hasInvalid() )? true : false;
+        	},
+        	success:function(){
+        		// inverse of hasError
+        		return ( this.hasBlank() || this.hasInvalid() )? false : true;
+        	},
+        	// BLANK
+        	missing:function(obj){
+        		if(!obj){// no arguments
+        			return $H(this._data).select(function(dat){
+        				return dat[1].isBlank();
+        			}).map(function(dat){return dat[0]});
+        		} 
+        		if(Object.isString(obj)){
+        			var key = obj;
+        			return this._data[key].isBlank();
+        		}
+        	},
+        	// 
+        	invalid:function(obj){
+        		if(!obj){
+        			// invalid な keyのリストを返す。
+        			return $H(this._data).select(function(dat){
+        				return dat[1].isInvalid();
+        			}).map(function(dat){return dat[0]});
+        		} 
+        		if(Object.isString(obj)){
+        			var key = obj;
+        			//そのkeyのinvalidなオペレーションを返す.
+        			return this._data[key].invalid();
+        		}
+        		if(obj.constructor == Object){
+        			return;
+        		}
+        	},
+        	error:function(obj){
+        		if(!obj){// no arguments
+        			return;
+        		} 
+        		if(Object.isString(obj)){
+
+        		}
+        		if(obj.constructor == Object){
+        			var own = arguments.callee;
+        			console.log(own);
+        			return;
+        		}
+        	}
+        });
+    	var defaultInstance = new this;
         Object.extend( this,{
             DEFAULT_OPTION :_DEFAULT_OPTION,
-            check : this.prototype.check.bind(new this),
+            setMessages:this.prototype.setMessages.bind(defaultInstance),
+            check : this.prototype.check.bind(defaultInstance),
             addPlugin : function(obj){
                 this.Plugin = this.Plugin || {};
                 Object.extend(this.Plugin,obj);
             }.bind(this)
         });
-        
     }).apply(this.Simple);
 
 }).apply(FormValidator);
 
-FormValidator.Simple.setMessages = function(){
-    
-    
-}
+/*
+
+
+*/
+
 
 FormValidator.Simple.addPlugin({
-    'NOT_BLANK':function(){
-        
+    'NOT_BLANK':function(target){
+        return (Object.isUndefined(target))?false:true;
     },
-    'ASCII'    :function(){
-        
+    'ASCII'    :function(target){
+        return /^[\x21-\x7E]+$/.test(target.toString());
     },
-    'LENGTH'   :function(){
-        
+    'LENGTH'   :function(target,from,till){
+    	var l=target.toString().length;
+    	if(!till){till=from;}
+    	
+        return (l >= from && l <=till)?true:false;
     },
-    'INT'      :function(){
-        
+    'INT'      :function(target){
+        return (target.toString().match(/^-?\d+$/gm)) ? true : false;
     },
     'UINT'     :function(){
+        return (target.toString().match(/^\d+$/gm))?true:false;
+    },
+    'DUPLICATION':function(target){
+        if(Object.isArray(target) && target.length == 2){
+        	return (target[0].toString() == target[1].toString())? true : false;
+        }else{
+        	return false;
+        }
+    },
+    'TIME':function(){
     
     },
-    'DUPLICATION':function(){
-        
+    'DATE':function(target){
+    	
     },
-    'DATE':function(){
-        
+    'DATETIME':function(){
+    
+    },
+    'ANY':function(){
+    
+    },
+    'ALL':function(){
+    	
+    },
+    'IN_ARRAY':function(){
+    
+    },
+    'BETWEEN':function(){
+    
+    },
+    'EQUAL_TO':function(){
+    
     },
     'GREATER_THAN':function(){
-        
+
     },
     'LESS_THAN':function(){
-        
+
     },
+    'SELECTED_AT_LEASET':function(){
     
+    },
+    'HTTP_URL':function(){
+		/^s?https?:\/\/[-_.!~*'()a-zA-Z0-9;\/?:\@&=+\$,%#]+$/.test('');
+		
+    },
+    'EMAIL_LOOSE':function(){
+
+    }
 });
 
-var obj = FormValidator.Simple.check({
-        'param1':'1111',
-        'mail2' :'2222',
-        'mail2' :'3333',
-        'year'  :'4444',
-        'month' :'5555',
-        'day'   :'6666'
-    },
-    [
-        "param1"    ,   ["NOT_BLANK","ASCII",["LENGTH",2,5]],
-        "param2"    ,   ["NOT_BLANK","INT"],
-        "mail1"     ,   ["NOT_BLANK","EMAIL_LOOSE"],
-        "mail2"     ,   ["NOT_BLANK","EMAIL_LOOSE"],
-        {"mails":["mail1","mail2"]}     ,   ["DUPLICATION"],
-        {"date":["year","month","day"]} ,   ["DATE"]
-    ]
-);
 
-console.log(obj);
+
