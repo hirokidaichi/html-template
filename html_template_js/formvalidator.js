@@ -45,10 +45,17 @@ var FormValidator = FormValidator || {};
         	}
         	throw('invalid function');
     	},
-    	invalid:function(){
-    		return this.data.checker.reject(function(f){return f.func == 'NOT_BLANK'}).select(function(f){
-    			return !this.evaluate(f);
-    		}.bind(this)).map(function(f){return f.func});
+    	invalid:function(val){
+    		var checkList =[];
+    		if(val){
+    			//checkList = 
+    		}else{
+    			checkList = this.data.checker.reject(function(f){return f.func == 'NOT_BLANK'});
+    		}
+			return checkList.select(function(f){
+				return !this.evaluate(f);
+			}.bind(this)).map(function(f){return f.func});
+    		
     	},
     	isBlank:function(){
 			// NOT_BLANK ‚Ì‚Ý
@@ -159,7 +166,10 @@ var FormValidator = FormValidator || {};
         			return this._data[key].invalid();
         		}
         		if(obj.constructor == Object){
-        			return;
+        			for(var firstKey in obj){ break;}
+        			var value = obj[firstKey];
+        			
+        			return this._data[firstKey].invalid(value);
         		}
         	},
         	error:function(obj){
