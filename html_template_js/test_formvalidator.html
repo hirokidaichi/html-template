@@ -67,9 +67,9 @@ body {
 <script language="javascript" type="text/javascript">
 <!--
 FormValidator.Simple.setMessages({
-    action1 :{
-        param1 : {
-            NOT_BLANK : 'input name!',
+    DEFAULT :{
+        param1: {
+            DEFAULT : 'input name!',
             LENGTH    : 'input name (length should be between 0 and 10)!',
         },
         param2 : {
@@ -79,7 +79,7 @@ FormValidator.Simple.setMessages({
 });
 
 var results = FormValidator.Simple.check({
-        'param1':'111111',
+        //'param1':'111111',
         'param2':'1111',
         'mail1' :'2222',
         'mail2' :'3333',
@@ -98,7 +98,20 @@ var results = FormValidator.Simple.check({
 );
 console.log(results);
 //console.log(results.hasBlank());
-console.log(results.invalid('param1'));
+//console.log(results.hasInvalid());
+console.log("---missing-----");
+console.log(results.missing());
+
+console.log("---invalid-----");
+//console.log(results.invalid());
+console.log("---error-----");
+console.log(results.error());
+console.log(results.error('param1'));
+console.log(results.error({param1:'NOT_BLANK'}));
+console.log(results.messages('action1'));
+
+
+//console.log(results.error());
 new Test.Unit.Runner({
     testNamespace:function(){with(this){
     
