@@ -36,7 +36,7 @@ HTML.Template = Class.create({
             this.storedName = "url:"+option['source'];
             new Ajax.Request(option['source'], {
                 method: 'get',
-                onSuccess: function(req) {
+                onComplete: function(req) {
                     this._source=req.responseText;
                     this.compile();
                     this.isCompiled = true;
@@ -96,19 +96,8 @@ HTML.Template = Class.create({
         }
         return "autocache:" + ret.toString();
     },
-    registerFunction: function(name_or_obj, func) {
-        if(Object.isString(name_or_obj) && Object.isFunction(func)){
-            var name = name_or_obj;
-            this._funcs[name] = func;
-        }else{
-            var obj = name_or_obj;
-            for (var prop in obj) {
-                this._funcs[prop] = obj[prop];
-            }
-        }
-    },
-    getFunctions:function(){
-        return this._funcs;
+    registerFunction: function(name, func) {
+        this._funcs[name] = func;
     },
     functionize: function() {
         var _func = this._output;
@@ -117,16 +106,16 @@ HTML.Template = Class.create({
                 type: 'function',
                 source: _func
             });
-            if( param )     _tmp.param(param);
-            if( functions ) _tmp.registerFunction(functions);
+            _tmp.param(param);
+            _tmp._funcs = functions;
             return _tmp.output();
         }
     },
     clearParam:function(){
-        this._param = {};
+    	this._param = {};
     },
     clearFunctions:function(){
-        this._funcs = {};
+    	this._funcs = {};
     },
     param: function(obj) {
         if (Object.isArray(obj)) {
@@ -233,7 +222,7 @@ Object.extend(HTML.Template,{
         "<",                // start
         "(%/)?",            // is CloseTag?
         "TMPL_",            // TMPL_ prefix
-        "(VAR|LOOP|IF|ELSE|ELSIF|UNLESS|INCLUDE)",
+        "(VAR|LOOP|IF|ELSE|ELSIF|UNLESS)",
         "%s*",                //
         "(?:",              // Attributes
             "(NAME|EXPR)=", //
@@ -267,6 +256,7 @@ Object.extend(HTML.Template,{
     },
     precompileBySelector:function(selector){
         $$(selector).each(function(e){
+        	
             var tmpl=$A(e.childNodes).select(function(m){return (m.nodeType==8)}).map(function(m){return m.data}).join('');
             HTML.Template.load('dom:'+e.identify(),tmpl);
         });
@@ -306,7 +296,7 @@ HTML.Template.Element.prototype = {
     },
     getParam: function() {
         if (this.attributes['name']) {
-            return "((_TOP_LEVEL['" + this.attributes['name'] + "']) ? _TOP_LEVEL['" + this.attributes['name'] + "'] : '')";
+            return "((_TOP_LEVEL['" + this.attributes['name'] + "']) ? _TOP_LEVEL['" + this.attributes['name'] + "'] : undefined)";
         }
         if (this.attributes['expr']) {
             return "(function(){with(_GLOBAL_FUNCTION){with(this._funcs){with(_TOP_LEVEL){return " + this.attributes['expr'] + "}}}}).apply(this)";
@@ -331,7 +321,11 @@ Object.extend(HTML.Template, {
       if (this.isClose()) {
         return '}.bind(this));'
       } else {
-        return ['var _LOOP_LIST =$A(' + this.getParam() + ');', 'var _LOOP_LENGTH=_LOOP_LIST.length;', '_LOOP_LIST.each(function(_TOP_LEVEL,i){', "_TOP_LEVEL['__first__'] = (i == 0) ? true: false;", "_TOP_LEVEL['__index__'] = i;", "_TOP_LEVEL['__odd__']   = (i % 2) ? true: false;", "_TOP_LEVEL['__last__']  = (i == (_LOOP_LENGTH - 1)) ? true: false;", "_TOP_LEVEL['__inner__'] = (_TOP_LEVEL['__first__']||_TOP_LEVEL['__last__'])?false:true;"].join('\n');
+        return ['var _LOOP_LIST =$A(' + this.getParam() + ')|| $A([]);', 'var _LOOP_LENGTH=_LOOP_LIST.length;',
+        '_LOOP_LIST.each(function(_TOP_LEVEL,i){',
+        '_TOP_LEVEL = (typeof _TOP_LEVEL == "object")?_TOP_LEVEL: {};',
+        "_TOP_LEVEL['__first__'] = (i == 0) ? true: false;",
+        "_TOP_LEVEL['__index__'] = i;", "_TOP_LEVEL['__odd__']   = (i % 2) ? true: false;", "_TOP_LEVEL['__last__']  = (i == (_LOOP_LENGTH - 1)) ? true: false;", "_TOP_LEVEL['__inner__'] = (_TOP_LEVEL['__first__']||_TOP_LEVEL['__last__'])?false:true;"].join('');
       }
     }
   }),
@@ -365,21 +359,6 @@ Object.extend(HTML.Template, {
         //error
       } else {
         return '}else{';
-      }
-    }
-  }),
-  INCLUDEElement: Class.create(HTML.Template.Element, {
-    type: 'include',
-    getCode: function() {
-      if (this.isClose()) {
-        //error
-      } else {
-        //return '}else{';
-        var name = '"'+(this.attributes['name'])+'"';
-        return ['if(HTML.Template.Cache['+name+']){',
-                'var _tmpl=new HTML.Template('+name+')',
-                '_RETURN_VALUE.push(_tmpl.functionize()(_TOP_LEVEL,this.getFunctions()));',
-               '}'].join('\n');
       }
     }
   }),
