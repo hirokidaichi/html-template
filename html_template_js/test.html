@@ -7,8 +7,6 @@
 <script src="lib/unittest.js"></script>
 
 <script src="template.js"></script>
-<script src="component.js"></script>
-<script src="common_namespace.js"></script>
 <style>
 body, div, p, h1, h2, h3, ul, ol, span, a, table, td, form, img, li {
   font-family: sans-serif;
@@ -66,6 +64,7 @@ body {
 <div id="urltest"></div>
 <div id="test01_tmpl" class="HTML_TEMPLATE"><!--<TMPL_LOOP NAME="loop"><TMPL_VAR NAME="test"></TMPL_LOOP>*--></div>
 <div id="test02_tmpl" class="HTML_TEMPLATE"><!--hello<TMPL_LOOP NAME='outer'><TMPL_INCLUDE NAME='dom:test01_tmpl'></TMPL_LOOP>hello--></div>
+<input type="button" value="for profile" id="profile">
 </body>
 <script language="javascript" type="text/javascript">
 <!--
@@ -103,6 +102,7 @@ var testURL = location.href.split("/");
 testURL.pop();
 testURL.push('tmpl/test.tmpl');
 testURL = testURL.join('/');
+/*
 $('urltest').observe('htmltemplate:compiled',function(evt){
     var target = evt.element();
 
@@ -116,7 +116,8 @@ new HTML.Template({
     source:testURL,
     element:$('urltest')
 });
-        
+*/
+
 new Test.Unit.Runner({
     testNamespace:function(){with(this){
         assert(HTML.Template                ,'HTML.Template');
@@ -231,8 +232,8 @@ new Test.Unit.Runner({
         assertEqual(x.output(),'HELP!');
         
         var x = new HTML.Template({type:'text',source:'<TMPL_LOOP EXPR="func(test)">i</TMPL_LOOP>'});
+        x.registerFunction('func',function(t){return [t,t,t,t,t,t,t,t,t,t]});
         x.param({
-            func:function(t){return [t,t,t,t,t,t,t,t,t,t];},
             test:10
         });
         assertEqual(x.output(),'iiiiiiiiii');
@@ -275,8 +276,6 @@ new Test.Unit.Runner({
                 {test:3}
             ]
         }));
-        if(!Prototype.Browser.IE)
-            assertEqual('urltest is ok',$('urltest').innerHTML);
     }},
     testBenchCompile:function(){with(this){
         benchmark(function(){
@@ -299,10 +298,9 @@ new Test.Unit.Runner({
     }},
     testBenchExpr:function(){with(this){
         var tmpl = new HTML.Template({type:'text',source:'<TMPL_VAR EXPR="addValue(x,10)"><TMPL_VAR EXPR="addValue(x,20)">'});
-
+        tmpl.registerFunction('addValue',function(a,b){return a+b});
         benchmark(function(){
             tmpl.param({
-                addValue:function(a,b){return a+b;},
                 x:100
             });
             tmpl.output();
@@ -310,6 +308,29 @@ new Test.Unit.Runner({
     }}
 });
 
+Event.observe(window,'load',function(){
+	$('profile').observe('click',function(){
+	    var tmpl=new HTML.Template('dom:test02_tmpl');
+	    tmpl.param({
+	    outer:[
+	        {loop:[
+	            {test:1},
+	            {test:2},
+	            {test:3},
+	        ]},
+	        {loop:[
+	            {test:1},
+	            {test:2},
+	            {test:3},
+	        ]}
+	    ]
+	    });
+
+	    alert(tmpl.output());
+	});
+
+    
+});
 -->
 </script>
 </html>

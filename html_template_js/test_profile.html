@@ -1,0 +1,131 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+    <title>Template Test</title>
+<script src="lib/prototype.js"></script>
+<script src="lib/unittest.js"></script>
+<script src="template.js"></script>
+
+<style>
+body, div, p, h1, h2, h3, ul, ol, span, a, table, td, form, img, li {
+  font-family: sans-serif;
+}
+
+body {
+  font-size:0.8em;
+}
+
+#log {
+  padding-bottom: 1em;
+  border-bottom: 2px solid #000;
+  margin-bottom: 2em;
+}
+
+#logsummary {
+  margin-bottom: 1em;
+  padding: 1ex;
+  border: 1px solid #000;
+  font-weight: bold;
+}
+
+#logtable {
+  width:100%;
+  border-collapse: collapse;
+  border: 1px dotted #666;
+}
+
+#logtable td, #logtable th {
+  text-align: left;
+  padding: 3px 8px;
+  border: 1px dotted #666;
+}
+
+#logtable .passed {
+  background-color: #cfc;
+}
+
+#logtable .failed, #logtable .error {
+  background-color: #fcc;
+}
+
+#logtable .nameCell {
+  cursor: pointer;
+}
+</style>
+<script language="javascript" type="text/javascript">
+<!--
+
+-->
+</script>
+</head>
+<body>
+<div id="testlog"></div>
+<div id="urltest"></div>
+<div id="test01_tmpl" class="HTML_TEMPLATE"><!--<TMPL_LOOP NAME="loop"><TMPL_VAR NAME="test"></TMPL_LOOP>*--></div>
+<div id="test02_tmpl" class="HTML_TEMPLATE"><!--hello<TMPL_LOOP NAME='outer'><TMPL_INCLUDE NAME='dom:test01_tmpl'></TMPL_LOOP>hello--></div>
+<input type="button" value="for profile" id="profile">
+</body>
+<script language="javascript" type="text/javascript">
+<!--
+
+var COMPLEX_TMPL =[
+    '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">',
+    '<head>',
+    '<meta http-equiv="Content-Type" content="text/html; charset=euc-jp"/>',
+    '<title>Test 2</title>',
+    '</head>',
+    '<body>',
+    '<h1>Test 2</h1>',
+    '<p>',
+    '<TMPL_LOOP NAME=loop>',
+    '<TMPL_IF NAME=case1>',
+    'Case-1',
+    '<TMPL_ELSE>',
+    '<TMPL_IF NAME=case2>',
+    'Case-2',
+    '<TMPL_ELSE>',
+    '<TMPL_IF NAME=case3>',
+    'Case-3',
+    '<TMPL_ELSE>',
+    'Other cases',
+    '</TMPL_IF>',
+    '</TMPL_IF>',
+    '</TMPL_IF>',
+    '</TMPL_LOOP>',
+    '</p>',
+    '</body>',
+    '</html>'
+].join('\n');
+
+var testURL = location.href.split("/");
+testURL.pop();
+testURL.push('tmpl/test.tmpl');
+testURL = testURL.join('/');
+/*
+$('urltest').observe('htmltemplate:compiled',function(evt){
+    var target = evt.element();
+
+    target.innerHTML = evt.memo.functionize()({
+        hoge:'urltest'
+    });
+}.bind(this))
+
+new HTML.Template({
+    type:'url',
+    source:testURL,
+    element:$('urltest')
+});
+*/   
+
+document.observe('dom:loaded',function(){
+	$('profile').observe('click',function(){
+		new HTML.Template({type:'text',source:COMPLEX_TMPL+Math.random()});
+		
+	});
+
+});
+
+-->
+</script>
+</html>

@@ -334,6 +334,7 @@ Object.extend(String, {
 
 Object.extend(String.prototype, {
   gsub: function(pattern, replacement) {
+  	
     var result = '', source = this, match;
     replacement = arguments.callee.prepareReplacement(replacement);
 
