@@ -20,10 +20,15 @@ HTML.Template = Class.create({
             throw ('option needs {type:~~,source:~~}');
         }
         
-        this._param = {};
-        this._funcs = {};
-        this._chunks = [];
+        this._param       = {};
+        this._funcs       = {};
+        this._chunks 	  = [];
+        this._registCount = 0;
+        this._paramCount  = 0;
+        this._outputCache = {};
+        this.isOutputCache = (option['output_cache']==false)?false:true;
         this.isCompiled = false;
+        this._elementCache = {};
         this.type = option['type'];
         if (option['type'] == 'text') {
             this._source = option['source'];
@@ -59,7 +64,7 @@ HTML.Template = Class.create({
         else if (option['type'] == 'element') {
             var elem = $(option['source']);
             if ( Object.isElement(elem) ) {
-                var tmpl=$A(elem.childNodes).select(function(m){return (m.nodeType==8)}).map(function(m){return m.data}).join('');
+                var tmpl = $A(elem.childNodes).select(function(m){return (m.nodeType==8)}).map(function(m){return m.data}).join('');
                 this.storedName = 'dom:'+elem.identify()
                 this._source = tmpl;
                 this.compile();
@@ -98,6 +103,7 @@ HTML.Template = Class.create({
         return "autocache:" + ret.toString();
     },
     registerFunction: function(name_or_obj, func) {
+    	++this._registCount;
         if(Object.isString(name_or_obj) && Object.isFunction(func)){
             var name = name_or_obj;
             this._funcs[name] = func;
@@ -124,16 +130,18 @@ HTML.Template = Class.create({
         }
     },
     clearParam:function(){
+    	++this._paramCount;
         this._param = {};
     },
     clearFunctions:function(){
+    	++this._registCount;
         this._funcs = {};
     },
     param: function(obj) {
         if (Object.isArray(obj)) {
             throw ('template.param not array');
         }
-
+     	++this._paramCount;
         for (var prop in obj) {
             this._param[prop] = (Object.isFunction(obj[prop]))?undefined:obj[prop];
         }
@@ -204,6 +212,14 @@ HTML.Template = Class.create({
             this.isCompiled = true;
         }
     },
+    toHTML:function(){
+    	return this.output();
+    },
+    /*toElement:function(){
+    	var div = document.createElement('div');
+    	div.innerHTML = this.output();
+    	return div;
+    },*/
     checkCompiled:function(){
         if(this.isCompiled)return true;
         if(this.type == 'name' && this.storedName){
@@ -215,13 +231,21 @@ HTML.Template = Class.create({
         }
         return false;
     },
+    _getKey:function(){
+    	return [this._paramCount,this._registCount,HTML.Template._registCount].join(':');
+    },
     output: function() {
         if ( this.checkCompiled() && this._output ) {
-        	//try{
+        	if(this.isOutputCache){
+	        	var key = this._getKey();
+	        	if(!this._outputCache[key]){
+	            	this._outputCache[key] = this._output();
+	            	//console.log(key);
+	            }
+	            return this._outputCache[key];
+            }else{
             	return this._output();
-            //}catch(e){
-            //	return '';
-            //}
+            }
         }
     }
 });
@@ -268,7 +292,9 @@ Object.extend(HTML.Template,{
         document.body.innerHTML = "<textarea style='width:100%;height:900px'>" + ret.join('') + "</textarea>";
         return ret.join('');
     },
+    _registCount:0,
     registerFunction : function(name, func) {
+    	++HTML.Template._registCount;
         HTML.Template.GLOBAL_FUNC[name] = func;
     },
     precompileBySelector:function(selector){
