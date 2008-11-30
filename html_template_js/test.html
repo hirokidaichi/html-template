@@ -5,7 +5,7 @@
     <title>Template Test</title>
 <script src="lib/prototype.js"></script>
 <script src="lib/unittest.js"></script>
-
+<script src="event_wrapper.js"></script>
 <script src="template.js"></script>
 <style>
 body, div, p, h1, h2, h3, ul, ol, span, a, table, td, form, img, li {
@@ -60,8 +60,32 @@ body {
 </script>
 </head>
 <body>
+
+
 <div id="testlog"></div>
 <div id="urltest"></div>
+<div id="field"></div>
+<div id="wrapper">
+<div id="_dummy">
+<h1>Test 2</h1>
+<p>
+Case-1</p><div>xx</div>
+Case-1<div>xx</div>
+Case-1<div>xx</div>
+Case-1<div>xx</div>
+<p></p>
+</div>
+<div id="_dummy2">
+<h1>Test 2</h1>
+<p>
+Case-1</p><div>xx</div>
+Case-1<div>xx</div>
+Case-1<div>xx</div>
+Case-1<div>xx</div>
+<p></p>
+</div>
+</div>
+
 <div id="test01_tmpl" class="HTML_TEMPLATE"><!--<TMPL_LOOP NAME="loop"><TMPL_VAR NAME="test"></TMPL_LOOP>*--></div>
 <div id="test02_tmpl" class="HTML_TEMPLATE"><!--hello<TMPL_LOOP NAME='outer'><TMPL_INCLUDE NAME='dom:test01_tmpl'></TMPL_LOOP>hello--></div>
 <input type="button" value="for profile" id="profile">
@@ -70,53 +94,26 @@ body {
 <!--
 
 var COMPLEX_TMPL =[
-    '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">',
-    '<head>',
-    '<meta http-equiv="Content-Type" content="text/html; charset=euc-jp"/>',
-    '<title>Test 2</title>',
-    '</head>',
-    '<body>',
     '<h1>Test 2</h1>',
     '<p>',
     '<TMPL_LOOP NAME=loop>',
     '<TMPL_IF NAME=case1>',
-    'Case-1',
+    'Case-1<div>xx</div>',
     '<TMPL_ELSE>',
     '<TMPL_IF NAME=case2>',
-    'Case-2',
+    'Case-2<div>xx</div>',
     '<TMPL_ELSE>',
     '<TMPL_IF NAME=case3>',
-    'Case-3',
+    'Case-3<div>xx</div>',
     '<TMPL_ELSE>',
-    'Other cases',
+    'Other cases<div>xx</div>',
     '</TMPL_IF>',
     '</TMPL_IF>',
     '</TMPL_IF>',
     '</TMPL_LOOP>',
     '</p>',
-    '</body>',
-    '</html>'
 ].join('\n');
 
-var testURL = location.href.split("/");
-testURL.pop();
-testURL.push('tmpl/test.tmpl');
-testURL = testURL.join('/');
-/*
-$('urltest').observe('htmltemplate:compiled',function(evt){
-    var target = evt.element();
-
-    target.innerHTML = evt.memo.functionize()({
-        hoge:'urltest'
-    });
-}.bind(this))
-
-new HTML.Template({
-    type:'url',
-    source:testURL,
-    element:$('urltest')
-});
-*/
 
 new Test.Unit.Runner({
     testNamespace:function(){with(this){
@@ -283,17 +280,56 @@ new Test.Unit.Runner({
         },100);
     }},
     testBenchOutput:function(){with(this){
-        var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
+        var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL,output_cache:false});
+        tmpl.param({
+            loop:[
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false}
+            ]
+        });
         benchmark(function(){
-            tmpl.param({
-                loop:[
-                    {case1:true,case2:true,case3:false},
-                    {case1:true,case2:true,case3:false},
-                    {case1:true,case2:true,case3:false},
-                    {case1:true,case2:true,case3:false}
-                ]
-            });
             tmpl.output();
+        },1000);
+    }},
+    testBenchOutputCache:function(){with(this){
+        var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
+        tmpl.param({
+            loop:[
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false}
+            ]
+        });
+        benchmark(function(){
+            tmpl.output();
+        },1000);
+    }},
+    testBenchAssign:function(){with(this){
+        var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
+        tmpl.param({
+            loop:[
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false}
+            ]
+        });
+        var f = $('field');
+
+        benchmark(function(){
+            f.update(tmpl);
+        },100);
+    }},
+    testBenchToggle:function(){with(this){
+    	var dummy = $('_dummy');dummy.toggle();
+    	var dummy2= $('_dummy2')
+        benchmark(function(){
+            dummy.toggle();
+            dummy2.toggle();
+            var x = $('wrapper').innerHTML;
         },100);
     }},
     testBenchExpr:function(){with(this){
@@ -306,31 +342,16 @@ new Test.Unit.Runner({
             tmpl.output();
         },1000);
     }}
-});
-
-Event.observe(window,'load',function(){
-	$('profile').observe('click',function(){
-	    var tmpl=new HTML.Template('dom:test02_tmpl');
-	    tmpl.param({
-	    outer:[
-	        {loop:[
-	            {test:1},
-	            {test:2},
-	            {test:3},
-	        ]},
-	        {loop:[
-	            {test:1},
-	            {test:2},
-	            {test:3},
-	        ]}
-	    ]
-	    });
-
-	    alert(tmpl.output());
-	});
-
     
 });
+
+window.onload=function(){
+    var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
+
+	$('profile').observe('click',function(){
+		tmpl.output();
+	});
+}
 -->
 </script>
 </html>
