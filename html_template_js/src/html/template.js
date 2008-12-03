@@ -3,97 +3,105 @@ if (!Prototype) throw ('HTML.Template require prototype.js');
 
 var HTML = {};
 HTML.Template = Class.create({
-    initialize: function(option) {
+    _guessOption:function(option){
         if ( Object.isString(option) ){
-            option = {type:'name',source:option}
+            return {type:'name',source:option}
         }
         else if ( Object.isFunction(option) ){
-            option = {type:'function',source:option}
+            return {type:'function',source:option}
         }
         else if ( Object.isElement(option) ){
-            option = {type:'element',source:option}
+            return {type:'element',source:option}
         }
-        
         if (! (option['type'] && option['source'])) {
             throw ('option needs {type:~~,source:~~}');
         }
+        return option;
+    },
+    _initUrl:function(){
+        this._source = 'contentUnload';
+        if(this.option['element'] && Object.isElement(this.option['element'])){
+            this.assignElement = this.option['element'];
+        }
+        this.storedName = "url:"+source;
+
+        new Ajax.Request(source, {
+            method: 'get',
+            onComplete  : function(req) {
+                this._source=req.responseText;
+                this.compile();
+                this.isCompiled = true;
+                if(this.assignElement){
+                    this.assignElement.fire('htmltemplate:compiled',this);
+                }
+            }.bind(this),
+            onFailure  : function(){
+                if(this.assignElement){
+                    this.assignElement.fire('htmltemplate:failure',this);
+                }else{
+                    throw(new Error('can not load tmpl.'))
+                }
+            },
+            onException: function() {
+                if(this.assignElement){
+                    this.assignElement.fire('htmltemplate:invalid_tmpl',this);
+                }else{
+                    throw(new Error('invalid tmpl.'))
+                }
+            }
+        });
+    },
+    _initText:function( source ){
+        this._source = Object.isString(source)?source:source.toString();
+        this.compile();
+    },
+    _initFunction:function( source ){
+        if (Object.isFunction(source)) {
+            this._output = source;
+            this.isCompiled = true;
+        }else{
+            throw(new Error('in case type is function, source must be function object.'))
+        }
+    },
+    _initElement:function( source ){
+        var elem = $('source');
+        if ( Object.isElement(elem) ) {
+            var tmpl = $A(elem.childNodes)
+                .select(function(m){return (m.nodeType==8)})
+                 .map(function(m){return m.data}).join('');
+
+            this.storedName = 'dom:'+elem.identify()
+            this._source = tmpl;
+            this.compile();
+            this.isCompiled = true;
+        }
+    },
+    _initLoad:function(){
+        if(!this.option['name']) throw('need name');
+        this._source    = this.option['source'];
+        this.storedName = this.option['name'];
+        this.compile();
+        this.isCompiled = true;
+    },
+    _initName:function( source ){
+        this.source = '';
+        this.storedName = source;
+        if (HTML.Template.Cache[this.storedName]) {
+            this._output = HTML.Template.Cache[this.storedName];
+            this.isCompiled = true;
+        }
+    },
+    initialize: function(option) {
         this._param  = {};
         this._funcs  = {};
         this._chunks = [];
         this.isCompiled = false;
 
-        this.type = option['type'];
-        if (option['type'] == 'text') {
-            this._source = option['source'];
-            this.compile();
-        }
-        else if (option['type'] == 'url') {
-            this._source = 'contentUnload';
-            if(option['element'] && Object.isElement(option['element'])){
-                this.assignElement = option['element'];
-            }
-            this.storedName = "url:"+option['source'];
-            new Ajax.Request(option['source'], {
-                method: 'get',
-                onComplete: function(req) {
-                    this._source=req.responseText;
-                    this.compile();
-                    this.isCompiled = true;
-                    if(this.assignElement){
-                        this.assignElement.fire('htmltemplate:compiled',this);
-                    }
-                }.bind(this),
-                onFailure  : function(){
-                    if(this.assignElement){
-                        this.assignElement.fire('htmltemplate:failure',this);
-                    }else{
-                        throw(new Error('can not load tmpl.'))
-                    }
-                },
-                onException: function() {
-                    if(this.assignElement){
-                        this.assignElement.fire('htmltemplate:invalid_tmpl',this);
-                    }else{
-                        throw(new Error('invalid tmpl.'))
-                    }
-                }
-            });
-        }
-        else if (option['type'] == 'function') {
-            if (Object.isFunction(option['source'])) {
-                this._output = option['source'];
-                this.isCompiled = true;
-            }
-        }
-        else if (option['type'] == 'element') {
-            var elem = $(option['source']);
-            if ( Object.isElement(elem) ) {
-                var tmpl = $A(elem.childNodes)
-                    .select(function(m){return (m.nodeType==8)})
-                    .map(function(m){return m.data}).join('');
-
-                this.storedName = 'dom:'+elem.identify()
-                this._source = tmpl;
-                this.compile();
-                this.isCompiled = true;
-            }
-        }
-        else if (option['type'] == 'name') {
-            this.source = '';
-            this.storedName = option['source'];
-            if (HTML.Template.Cache[this.storedName]) {
-                this._output = HTML.Template.Cache[this.storedName];
-                this.isCompiled = true;
-            }
-        }
-        else if (option['type'] == 'load') {
-            if(!option['name']) throw('need name');
-            this._source    = option['source'];
-            this.storedName = option['name'];
-            this.compile();
-            this.isCompiled = true;
-        }
-        else {
+        this.option     = this._guessOption(option);
+        var initializer = this['_init'+this.option['type'].capitalize()];
+        if( initializer ){
+            initializer.apply(this,[this.option['source']]);
+        }else{
             throw('invalid type');
         }
     },
@@ -218,7 +226,7 @@ HTML.Template = Class.create({
 
 
 Object.extend(HTML.Template,{
-    VERSION:'0.4.2',
+    VERSION:'0.4.3',
     DEFAULT_SELECTOR:'.HTML_TEMPLATE',
     CHUNK_REGEXP:(function(escapeChar,expArray){
         function _escape( regText){
@@ -266,7 +274,6 @@ Object.extend(HTML.Template,{
     },
     precompileBySelector:function(selector){
         $$(selector).each(function(e){
-            
             var tmpl=$A(e.childNodes).select(function(m){return (m.nodeType==8)}).map(function(m){return m.data}).join('');
             HTML.Template.load('dom:'+e.identify(),tmpl);
         });
