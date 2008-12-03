@@ -51,8 +51,8 @@ Case-1<div>xx</div>
 </div>
 </div>
 
-<div id="test01_tmpl" class="html_template"><!--<TMPL_LOOP NAME="loop"><TMPL_VAR NAME="test"></TMPL_LOOP>*--></div>
-<div id="test02_tmpl" class="html_template"><!--hello<TMPL_LOOP NAME='outer'><TMPL_INCLUDE NAME='dom:test01_tmpl'></TMPL_LOOP>hello--></div>
+<div id="test01_tmpl" class="HTML_TEMPLATE"><!--<TMPL_LOOP NAME="loop"><TMPL_VAR NAME="test"></TMPL_LOOP>*--></div>
+<div id="test02_tmpl" class="HTML_TEMPLATE"><!--hello<TMPL_LOOP NAME='outer'><TMPL_INCLUDE NAME='dom:test01_tmpl'></TMPL_LOOP>hello--></div>
 
 </body>
 <script language="javascript" type="text/javascript">
@@ -257,6 +257,11 @@ new Test.Unit.Runner({
         benchmark(function(){
             tmpl.output();
         },1000);
+    }},
+    testBenchHashFunction:function(){with(this){
+        benchmark(function(){
+            HTML.Template.hashFunction(COMPLEX_TMPL);
+        },100);
     }},
     testBenchOutputCache:function(){with(this){
         var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});

@@ -111,7 +111,7 @@ HTML.Template = Class.create({
         }
     },
     _uniqHash: function() {
-        var source = this._source;
+        /*var source = this._source;
         var max = (1 << 30);
         var length = source.length;
         var ret = 34351;
@@ -119,8 +119,8 @@ HTML.Template = Class.create({
             ret *= 37;
             ret += source.charCodeAt(i);
             ret %= max;
-        }
-        return "autocache:" + ret.toString();
+        }*/
+        return "autocache:" + HTML.Template.hashFunction(this._source);
     },
     registerFunction: function(name, func) {
         this._funcs[name] = func;
@@ -170,19 +170,19 @@ HTML.Template = Class.create({
                 this._chunks.push(HTML.Template.createElement('text', text));
                 source = source.slice(index);
             };
-            var attr;
+            var attr,name,value;
             if (results[3]) {
-                var name = results[3].toLowerCase();
-                var value = [results[4], results[5], results[6]].join('');
-                attr = {};
+                name  = results[3].toLowerCase();
+                value = [results[4], results[5], results[6]].join('');
+                attr  = {};
                 attr[name] = value;
             } else {
                 attr = undefined;
             }
             this._chunks.push(HTML.Template.createElement(results[2], {
                 'attributes': attr,
-                'closeTag': results[1],
-                'parent': this
+                'closeTag'  : results[1],
+                'parent'    : this
             }));
             source = source.slice(results[0].length);
         };
@@ -232,7 +232,6 @@ HTML.Template = Class.create({
     }
 });
 
-
 Object.extend(HTML.Template,{
     VERSION           : '0.4.3',
     DEFAULT_SELECTOR  : '.HTML_TEMPLATE',
@@ -261,8 +260,10 @@ Object.extend(HTML.Template,{
         ")?",//
         ">"//
     ]),
-    GLOBAL_FUNC : {},
-    Cache :{},
+    GLOBAL_FUNC     :{},
+    Cache           :{},
+    useElementCache :false,
+    ElementCache    :{},
     watchCache:function() {
         var ret = [];
         ret.push('HTML.Template.Cache={');
@@ -275,6 +276,17 @@ Object.extend(HTML.Template,{
         document.body.innerHTML = "<textarea style='width:100%;height:900px'>" + ret.join('') + "</textarea>";
         return ret.join('');
     },
+    hashFunction  : function(string){
+        var max = (1 << 30);
+        var length = string.length;
+        var ret = 34351;
+        for (var i = 0; i < length; i++) {
+            ret *= 37;
+            ret += string.charCodeAt(i);
+            ret %= max;
+        }
+        return ret;
+    },
     createElement : function(type, option) {
         return new HTML.Template[type.toUpperCase() + 'Element'](option);
     },
@@ -283,12 +295,14 @@ Object.extend(HTML.Template,{
     },
     precompileBySelector:function(selector){
         $$(selector).each(function(e){
-            var tmpl=$A(e.childNodes).select(function(m){return (m.nodeType==8)}).map(function(m){return m.data}).join('');
+            var tmpl = $A(e.childNodes)
+                       .select(function(m){return (m.nodeType==8)})
+                           .map(function(m){return m.data})
+                               .join('');
             HTML.Template.load('dom:'+e.identify(),tmpl);
         });
     }
 });
-
 
 
 HTML.Template.Element = Class.create();
@@ -334,13 +348,16 @@ HTML.Template.Element.prototype = {
                 this.attributes['name'] ,
                 "']) ? _TOP_LEVEL['"    ,
                 this.attributes['name'] , 
-                "'] : undefined)"
+                "'] : undefined )"
             ].join('');
         }
         if (this.attributes['expr']) {
             return [
-                "(function(){with(_GLOBAL_FUNCTION){with(this._funcs){with(_TOP_LEVEL){return ",
-                this.attributes['expr'] ,
+                "(function(){",
+                "    with(_GLOBAL_FUNCTION){",
+                "        with(this._funcs){",
+                "            with(_TOP_LEVEL){",
+                "                return ", this.attributes['expr'] ,';',
                 "}}}}).apply(this)"
             ].join('');
         }
@@ -389,7 +406,6 @@ Object.extend(HTML.Template, {
         type: 'var',
         getCode: function() {
             if (this.isClose()) {
-                //error
                 throw(new Error('HTML.Template ParseError'));
             } else {
                 return '_RETURN_VALUE.push(' + this.getParam() + ');';
