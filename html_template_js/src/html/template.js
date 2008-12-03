@@ -52,7 +52,12 @@ HTML.Template = Class.create({
         });
     },
     _initText:function( source ){
-        this._source = Object.isString(source)?source:source.toString();
+        this._source = Object.isString(source)?
+                       source:
+                           (source.toString)?
+                               source.toString():
+                                    '';
+        
         this.compile();
     },
     _initFunction:function( source ){
@@ -221,13 +226,17 @@ HTML.Template = Class.create({
         if (this.checkCompiled()) {
             return this._output();
         }
+    },
+    toHTML: function(){
+        return this.output();
     }
 });
 
 
 Object.extend(HTML.Template,{
-    VERSION:'0.4.3',
-    DEFAULT_SELECTOR:'.HTML_TEMPLATE',
+    VERSION           : '0.4.3',
+    DEFAULT_SELECTOR  : '.HTML_TEMPLATE',
+    DEFERRED_SELECTOR : '.HTML_TEMPLATE_DEFERRED',
     CHUNK_REGEXP:(function(escapeChar,expArray){
         function _escape( regText){
             return (regText + '').replace(new RegExp(escapeChar,'g'), "\\");
@@ -259,7 +268,7 @@ Object.extend(HTML.Template,{
         ret.push('HTML.Template.Cache={');
         for (var prop in HTML.Template.Cache) {
             var value = HTML.Template.Cache[prop];
-            if (Object.isFunction(value)) ret.push("'" + prop + "':" + value.toString().replace(/(\n|^\s+)/mg, '') + ',');
+            if (Object.isFunction(value)) ret.push("'" + prop + "':" + value.toString() + ',');
         }
         ret.push('_fin_:undefined');
         ret.push('};');
@@ -474,6 +483,7 @@ HTML.Template.load = function(name,value){
 
 document.observe('dom:loaded',function(){
     HTML.Template.precompileBySelector(HTML.Template.DEFAULT_SELECTOR);
+    HTML.Template.precompileBySelector.defer(HTML.Template.DEFERED_SELECTOR);
 });
 
 
