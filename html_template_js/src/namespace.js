@@ -14,7 +14,6 @@
         depends : export_depends,
         dynamic : export_dynamic,
         using   : export_using,
-        wait    : export_wait,
         dumpCache:export_dumpCache,
         INCLUDE : '/static/js/'
     });
@@ -48,35 +47,7 @@
             throw(new Error(MESSAGE.NOREF));
         }
     };
-    function export_wait(condition,func){
-        var cond = null
-        if(Object.isFunction(condition)){
-            cond = condition;
-        }
-        if(Object.isString(condition)){
-            cond = function(){
-                try{
-                    return _getNamespace(condition);
-                }catch(e){
-                    return false;
-                }
-            }
-        }
-        var check = function(sync){
-            var obj = null;
-            if( obj = cond() ){
-                
-                if(!sync){
-                    func.apply(obj);
-                    clearInterval(id);
-                }else{
-                    return true;
-                }
-            }
-        };
-        if(check(true))return true;
-        var id = setInterval( check, 30 );
-    }
+
     function export_dumpCache(){
         console.log(cache);
     }
@@ -117,7 +88,7 @@
             return ns;
         }
     }
-    // 
+
     function export_dynamic(fqn,func){
         var ns;
         try{

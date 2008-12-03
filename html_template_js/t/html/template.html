@@ -1,70 +1,34 @@
 ﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
-
-
 <html>
 <head>
-    <title>Template Test</title>
-<script src="lib/prototype.js"></script>
-<script src="lib/unittest.js"></script>
-<script src="event_wrapper.js"></script>
-<script src="template.js"></script>
-<style>
-body, div, p, h1, h2, h3, ul, ol, span, a, table, td, form, img, li {
-  font-family: sans-serif;
-}
-
-body {
-  font-size:0.8em;
-}
-
-#log {
-  padding-bottom: 1em;
-  border-bottom: 2px solid #000;
-  margin-bottom: 2em;
-}
-
-#logsummary {
-  margin-bottom: 1em;
-  padding: 1ex;
-  border: 1px solid #000;
-  font-weight: bold;
-}
-
-#logtable {
-  width:100%;
-  border-collapse: collapse;
-  border: 1px dotted #666;
-}
-
-#logtable td, #logtable th {
-  text-align: left;
-  padding: 3px 8px;
-  border: 1px dotted #666;
-}
-
-#logtable .passed {
-  background-color: #cfc;
-}
-
-#logtable .failed, #logtable .error {
-  background-color: #fcc;
-}
-
-#logtable .nameCell {
-  cursor: pointer;
-}
-</style>
-<script language="javascript" type="text/javascript">
+<title>Template Test</title>
+<link rel="stylesheet" href="../../resources/test.css" type="text/css" />
+<script>
 <!--
+    var VERSION       = location.href.match(/version=([\d\.]+)/) ? '-'+RegExp.$1 : '';
+    var PROTOTYPE     = '../../lib/prototype.js';
+    var UNIT_TEST     = '../../lib/unittest.js';
+    var SRC_DIRECTORY = '../../src/';
+    var TARGET_CODES  = [
+        'event_wrapper.js',
+        'html/template'+VERSION+'.js'
+    ];
+    
+    document.writeln('<script src=\"'+ PROTOTYPE +'\"><\/script>');
+    document.writeln('<script src=\"'+ UNIT_TEST +'\"><\/script>');
+    for(var i = 0 ,T, l = TARGET_CODES.length;i<l; i++){
+        T = SRC_DIRECTORY + TARGET_CODES[i];
+        document.writeln('<script src=\"'+ T +'\"><\/script>');
+    }
 
 -->
 </script>
+
 </head>
 <body>
-
-
 <div id="testlog"></div>
 <div id="urltest"></div>
+
 <div id="field"></div>
 <div id="wrapper">
 <div id="_dummy">
