@@ -5,6 +5,8 @@
 <link rel="stylesheet" href="../../resources/test.css" type="text/css" />
 <script>
 <!--
+    var first         = (new Date).getTime();
+    var ar = [];
     var VERSION       = location.href.match(/version=([\d\.]+)/) ? '-'+RegExp.$1 : '';
     var PROTOTYPE     = '../../lib/prototype.js';
     var UNIT_TEST     = '../../lib/unittest.js';
@@ -13,7 +15,9 @@
         'event_wrapper.js',
         'html/template'+VERSION+'.js'
     ];
-    
+    /*etInterval(function(){
+        ar.push((new Date).getTime());
+    },10);*/
     document.writeln('<script src=\"'+ PROTOTYPE +'\"><\/script>');
     document.writeln('<script src=\"'+ UNIT_TEST +'\"><\/script>');
     for(var i = 0 ,T, l = TARGET_CODES.length;i<l; i++){
@@ -30,7 +34,12 @@
 <div id="urltest"></div>
 
 <div id="field"></div>
-<div id="field2"></div>
+<div id="field_update"></div>
+<div id="field_update_render"></div>
+<div id="field_insert"></div>
+<div id="field_insert_render"></div>
+
+
 <div id="wrapper">
 <div id="_dummy">
 <h1>Test 2</h1>
@@ -59,8 +68,9 @@ Case-1<div>xx</div>
 <script language="javascript" type="text/javascript">
 <!--
 
+
 var COMPLEX_TMPL =[
-    '<h1>Test 2</h1>',
+    '<h1>Test <TMPL_VAR NAME=name></h1>',
     '<p>',
     '<TMPL_LOOP NAME=loop>',
     '<TMPL_IF NAME=case1>',
@@ -77,10 +87,13 @@ var COMPLEX_TMPL =[
     '</TMPL_IF>',
     '</TMPL_IF>',
     '</TMPL_LOOP>',
-    '</p>',
+    '<img src="../../resources/test.jpg">',
+    '</p>'
 ].join('\n');
 
-
+document.observe('dom:loaded',function(){
+    console.log((new Date).getTime()-first);
+    console.log(ar.length);
 new Test.Unit.Runner({
     testNamespace:function(){with(this){
         assert(HTML.Template                ,'HTML.Template');
@@ -241,17 +254,20 @@ new Test.Unit.Runner({
         }));
     }},
     testRender:function(){with(this){
-        var test01=new HTML.Template('dom:test01_tmpl');
-        test01.param({
+        var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
+        tmpl.param({
+            name:"render",
             loop:[
-                {test:1},
-                {test:2},
-                {test:3}
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false}
             ]
         });
-        test01.render();
-        //console.log(test01.toElement());
-        $('field').update(test01.toElement());//.toElement());
+        tmpl.render();
+        $('field').update(tmpl);
+        $('field').insert(tmpl);
+        $('field').replace(tmpl);
     }},
     testBenchCompile:function(){with(this){
         benchmark(function(){
@@ -277,6 +293,22 @@ new Test.Unit.Runner({
             HTML.Template.hashFunction(COMPLEX_TMPL);
         },100);
     }},
+    testBenchInnerHTML:function(){with(this){
+        var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
+        tmpl.param({
+            loop:[
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false}
+            ]
+        });
+        tmpl.render();
+        var f = $('field_update_render');
+        benchmark(function(){
+            f.innerHTML = tmpl.output();
+        },100);
+    }},
     testBenchUpdate:function(){with(this){
         var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
         tmpl.param({
@@ -287,9 +319,9 @@ new Test.Unit.Runner({
                 {case1:true,case2:true,case3:false}
             ]
         });
-        var f = $('field');
+        var f = $('field_update');
         benchmark(function(){
-            f.update (tmpl);
+            f.update(tmpl);
         },100);
     }},
     testBenchPrerenderUpdate:function(){with(this){
@@ -303,9 +335,9 @@ new Test.Unit.Runner({
             ]
         });
         tmpl.render();
-        var f = $('field');
+        var f = $('field_update_render');
         benchmark(function(){
-            f.update (tmpl);
+            f.update(tmpl);
         },100);
     }},
     testBenchInsert:function(){with(this){
@@ -318,7 +350,7 @@ new Test.Unit.Runner({
                 {case1:true,case2:true,case3:false}
             ]
         });
-        var f = $('field2');
+        var f = $('field_insert');
         benchmark(function(){
             f.insert(tmpl);
         },100);
@@ -334,14 +366,17 @@ new Test.Unit.Runner({
             ]
         });
         tmpl.render();
-        var f = $('field2');
+        var f = $('field_insert_render');
         benchmark(function(){
             f.insert(tmpl);
         },100);
     }},
 
     testBenchExpr:function(){with(this){
-        var tmpl = new HTML.Template({type:'text',source:'<TMPL_VAR EXPR="addValue(x,10)"><TMPL_VAR EXPR="addValue(x,20)">'});
+        var tmpl = new HTML.Template({
+            type   :'text',
+            source :'<TMPL_VAR EXPR="addValue(x,10)"><TMPL_VAR EXPR="addValue(x,20)">'
+        });
         tmpl.registerFunction('addValue',function(a,b){return a+b});
         benchmark(function(){
             tmpl.param({
@@ -352,7 +387,7 @@ new Test.Unit.Runner({
     }}
 
 });
-
+});
 
 -->
 </script>

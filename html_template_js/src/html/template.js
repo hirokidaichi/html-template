@@ -1,6 +1,6 @@
 
 if (!Prototype) throw ('HTML.Template require prototype.js');
-
+//window.localStorage = window.localStorage || window.globalStorage[location.hostname];
 var HTML = {};
 HTML.Template = Class.create({
     _guessOption:function(option){
@@ -127,16 +127,16 @@ HTML.Template = Class.create({
             return _tmp.output();
         }
     },
-    render :function(targetNode){
+    render :function(targetNode,option){
         // experimental function
         var tagName = (Object.isElement(targetNode))?targetNode.tagName:
-            (Object.isString(targetNode)) ?targetNode :'div';
+                      (Object.isString(targetNode)) ?targetNode :'div';
         if(document.createDocumentFragment){
             var dfrag   = document.createDocumentFragment();
-            
             Element._getContentFromAnonymousElement(tagName,this.output()).each(function(e){
                 dfrag.appendChild(e);
             });
+            
             this.toElement = function(){
                 var tmp = dfrag.cloneNode(true);
                 return tmp;
