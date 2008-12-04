@@ -30,6 +30,7 @@
 <div id="urltest"></div>
 
 <div id="field"></div>
+<div id="field2"></div>
 <div id="wrapper">
 <div id="_dummy">
 <h1>Test 2</h1>
@@ -86,10 +87,10 @@ new Test.Unit.Runner({
         assert(HTML.Template.Element        ,'HTML.Template.Element');
         assert(HTML.Template.ROOTElement    ,'HTML.Template.ROOTElement');
         assert(HTML.Template.LOOPElement    ,'HTML.Template.LOOPElement');
-        assert(HTML.Template.IFElement        ,'HTML.Template.IFElement');
+        assert(HTML.Template.IFElement      ,'HTML.Template.IFElement');
         assert(HTML.Template.ELSEElement    ,'HTML.Template.ELSEElement');
-        assert(HTML.Template.ELSIFElement    ,'HTML.Template.ELSIFElement');
-        assert(HTML.Template.VARElement        ,'HTML.Template.VARElement');
+        assert(HTML.Template.ELSIFElement   ,'HTML.Template.ELSIFElement');
+        assert(HTML.Template.VARElement     ,'HTML.Template.VARElement');
         assert(HTML.Template.TEXTElement    ,'HTML.Template.TEXTElement');
         assert(HTML.Template.UNLESSElement  ,'HTML.Template.UNLESSElement');
     }},
@@ -239,13 +240,26 @@ new Test.Unit.Runner({
             ]
         }));
     }},
+    testRender:function(){with(this){
+        var test01=new HTML.Template('dom:test01_tmpl');
+        test01.param({
+            loop:[
+                {test:1},
+                {test:2},
+                {test:3}
+            ]
+        });
+        test01.render();
+        //console.log(test01.toElement());
+        $('field').update(test01.toElement());//.toElement());
+    }},
     testBenchCompile:function(){with(this){
         benchmark(function(){
             new HTML.Template({type:'text',source:COMPLEX_TMPL+Math.random()});
         },100);
     }},
     testBenchOutput:function(){with(this){
-        var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL,output_cache:false});
+        var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
         tmpl.param({
             loop:[
                 {case1:true,case2:true,case3:false},
@@ -263,21 +277,7 @@ new Test.Unit.Runner({
             HTML.Template.hashFunction(COMPLEX_TMPL);
         },100);
     }},
-    testBenchOutputCache:function(){with(this){
-        var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
-        tmpl.param({
-            loop:[
-                {case1:true,case2:true,case3:false},
-                {case1:true,case2:true,case3:false},
-                {case1:true,case2:true,case3:false},
-                {case1:true,case2:true,case3:false}
-            ]
-        });
-        benchmark(function(){
-            tmpl.output();
-        },1000);
-    }},
-    testBenchAssign:function(){with(this){
+    testBenchUpdate:function(){with(this){
         var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
         tmpl.param({
             loop:[
@@ -288,20 +288,58 @@ new Test.Unit.Runner({
             ]
         });
         var f = $('field');
+        benchmark(function(){
+            f.update (tmpl);
+        },100);
+    }},
+    testBenchPrerenderUpdate:function(){with(this){
+        var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
+        tmpl.param({
+            loop:[
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false}
+            ]
+        });
+        tmpl.render();
+        var f = $('field');
+        benchmark(function(){
+            f.update (tmpl);
+        },100);
+    }},
+    testBenchInsert:function(){with(this){
+        var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
+        tmpl.param({
+            loop:[
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false}
+            ]
+        });
+        var f = $('field2');
+        benchmark(function(){
+            f.insert(tmpl);
+        },100);
+    }},
+    testBenchPrerenderInsert:function(){with(this){
+        var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
+        tmpl.param({
+            loop:[
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false},
+                {case1:true,case2:true,case3:false}
+            ]
+        });
+        tmpl.render();
+        var f = $('field2');
+        benchmark(function(){
+            f.insert(tmpl);
+        },100);
+    }},
 
-        benchmark(function(){
-            f.update(tmpl);
-        },100);
-    }},
-    testBenchToggle:function(){with(this){
-    	var dummy = $('_dummy');dummy.toggle();
-    	var dummy2= $('_dummy2')
-        benchmark(function(){
-            dummy.toggle();
-            dummy2.toggle();
-            var x = $('wrapper').innerHTML;
-        },100);
-    }},
     testBenchExpr:function(){with(this){
         var tmpl = new HTML.Template({type:'text',source:'<TMPL_VAR EXPR="addValue(x,10)"><TMPL_VAR EXPR="addValue(x,20)">'});
         tmpl.registerFunction('addValue',function(a,b){return a+b});
@@ -312,7 +350,7 @@ new Test.Unit.Runner({
             tmpl.output();
         },1000);
     }}
-    
+
 });
 
 

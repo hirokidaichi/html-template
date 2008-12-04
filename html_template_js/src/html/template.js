@@ -24,7 +24,6 @@ HTML.Template = Class.create({
             this.assignElement = this.option['element'];
         }
         this.storedName = "url:"+source;
-
         new Ajax.Request(source, {
             method: 'get',
             onComplete  : function(req) {
@@ -76,7 +75,7 @@ HTML.Template = Class.create({
                  .map(function(m){return m.data}).join('');
 
             this.storedName = 'dom:'+elem.identify()
-            this._source = tmpl;
+            this._source    = tmpl;
             this.compile();
             this.isCompiled = true;
         }
@@ -111,15 +110,6 @@ HTML.Template = Class.create({
         }
     },
     _uniqHash: function() {
-        /*var source = this._source;
-        var max = (1 << 30);
-        var length = source.length;
-        var ret = 34351;
-        for (var i = 0; i < length; i++) {
-            ret *= 37;
-            ret += source.charCodeAt(i);
-            ret %= max;
-        }*/
         return "autocache:" + HTML.Template.hashFunction(this._source);
     },
     registerFunction: function(name, func) {
@@ -137,11 +127,31 @@ HTML.Template = Class.create({
             return _tmp.output();
         }
     },
+    render :function(targetNode){
+        // experimental function
+        var tagName = (Object.isElement(targetNode))?targetNode.tagName:
+            (Object.isString(targetNode)) ?targetNode :'div';
+        if(document.createDocumentFragment){
+            var dfrag   = document.createDocumentFragment();
+            
+            Element._getContentFromAnonymousElement(tagName,this.output()).each(function(e){
+                dfrag.appendChild(e);
+            });
+            this.toElement = function(){
+                var tmp = dfrag.cloneNode(true);
+                return tmp;
+            }
+        }
+    },
     clearParam:function(){
         this._param = {};
     },
     clearFunctions:function(){
         this._funcs = {};
+    },
+    clear: function(){
+        this.clearParam();
+        this.clearFunction();
     },
     param: function(obj) {
         if (Object.isArray(obj)) {
@@ -262,7 +272,9 @@ Object.extend(HTML.Template,{
     ]),
     GLOBAL_FUNC     :{},
     Cache           :{},
-    useElementCache :false,
+    useElementCache :true  ,
+    useLoopVariable :false ,
+    usePrerender    :true  ,
     ElementCache    :{},
     watchCache:function() {
         var ret = [];
@@ -276,16 +288,20 @@ Object.extend(HTML.Template,{
         document.body.innerHTML = "<textarea style='width:100%;height:900px'>" + ret.join('') + "</textarea>";
         return ret.join('');
     },
+
     hashFunction  : function(string){
-        var max = (1 << 30);
+        var max = (1 << 31);
         var length = string.length;
-        var ret = 34351;
+        var ret    = 34351;
+        var pos    = 'x';
         for (var i = 0; i < length; i++) {
+            var c = string.charCodeAt(i);
             ret *= 37;
-            ret += string.charCodeAt(i);
+            pos ^= c;
+            ret += c;
             ret %= max;
         }
-        return ret;
+        return ret.toString(16)+'-'+(pos & 0x00ff).toString(16) ;
     },
     createElement : function(type, option) {
         return new HTML.Template[type.toUpperCase() + 'Element'](option);
@@ -316,12 +332,12 @@ HTML.Template.Element.prototype = {
             }.bind(this));
         }
     },
-    isParent: Prototype.emptyFunction,
-    execute: Prototype.emptyFunction,
-    isClose: function() {
+    isParent : Prototype.emptyFunction,
+    execute  : Prototype.emptyFunction,
+    isClose  : function() {
         return this['closeTag'] ? true: false;
     },
-    appendChild: function(child) {
+    appendChild : function(child) {
         if (!this.children) this.children = [];
         this.children.push(child);
     },
@@ -372,10 +388,10 @@ Object.extend(HTML.Template, {
                 return 'return _RETURN_VALUE.join("");'
             } else {
                 return [
-                    'var _RETURN_VALUE=[];',
-                    'var _GLOBAL_PARAM=this._param;',
-                    'var _GLOBAL_FUNCTION=HTML.Template.GLOBAL_FUNC;',
-                    'var _TOP_LEVEL=this._param;'
+                    'var _RETURN_VALUE    = [];',
+                    'var _GLOBAL_PARAM    = this._param;',
+                    'var _GLOBAL_FUNCTION = HTML.Template.GLOBAL_FUNC;',
+                    'var _TOP_LEVEL       = this._param;'
                 ].join('');
             }
         }
@@ -392,11 +408,13 @@ Object.extend(HTML.Template, {
                 'var _LOOP_LENGTH=_LOOP_LIST.length;',
                 '_LOOP_LIST.each(function(_TOP_LEVEL,i){',
                 '   _TOP_LEVEL = (typeof _TOP_LEVEL == "object")?_TOP_LEVEL: {};',
-                "   _TOP_LEVEL['__first__'] = (i == 0) ? true: false;",
-                "   _TOP_LEVEL['__index__'] = i;",
-                "   _TOP_LEVEL['__odd__']   = (i % 2) ? true: false;",
-                "   _TOP_LEVEL['__last__']  = (i == (_LOOP_LENGTH - 1)) ? true: false;",
-                "   _TOP_LEVEL['__inner__'] = (_TOP_LEVEL['__first__']||_TOP_LEVEL['__last__'])?false:true;"
+                (HTML.Template.useLoopVariable)? [
+                    "_TOP_LEVEL['__first__'] = (i == 0) ? true: false;",
+                    "_TOP_LEVEL['__index__'] = i;",
+                    "_TOP_LEVEL['__odd__']   = (i % 2) ? true: false;",
+                    "_TOP_LEVEL['__last__']  = (i == (_LOOP_LENGTH - 1)) ? true: false;",
+                    "_TOP_LEVEL['__inner__'] = (_TOP_LEVEL['__first__']||_TOP_LEVEL['__last__'])?false:true;"
+                ].join(''):'',
                 ].join('');
             }
         }
@@ -447,7 +465,7 @@ Object.extend(HTML.Template, {
                 var name = '"'+(this.attributes['name'])+'"';
                 return [
                     'if(HTML.Template.Cache['+name+']){',
-                    '   var _tmpl=new HTML.Template('+name+');',
+                    '   var _tmpl = new HTML.Template('+name+');',
                     '   _tmpl.registerFunction(this._funcs );',
                     '   _tmpl.param(_TOP_LEVEL);',
                     '   _RETURN_VALUE.push(_tmpl.output());',
@@ -496,6 +514,16 @@ HTML.Template.load = function(name,value){
     });
 };
 
+if(HTML.Template.usePrerender){
+    Object.extend(Object,{
+        isDocumentFragment:function(object){
+            return !!(object && object.nodeType == 11);
+        },
+        isElement:function(object){
+            return !!(object && ( object.nodeType == 1 || object.nodeType == 11));
+        }
+    });
+}
 
 document.observe('dom:loaded',function(){
     HTML.Template.precompileBySelector(HTML.Template.DEFAULT_SELECTOR);
