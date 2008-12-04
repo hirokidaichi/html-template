@@ -1,5 +1,4 @@
 if (!Prototype) throw ('Event.Wrapper require prototype.js');
-if (parseInt(Prototype.Version) > 1.6) throw ('Event.Wrapper require prototype.js v1.6 or later');
 
 if(Prototype.Browser.IE)(function() {
 
