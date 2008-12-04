@@ -46,9 +46,9 @@ var FormValidator = FormValidator || {};
                 
                 var result;
                 try{
-                	result = (func.apply(this,a))?true:false;
+                    result = (func.apply(this,a))?true:false;
                 }catch(e){
-                	result = false;
+                    result = false;
                 }
                 checker.result = result;
                 console.log([checker.func,result].join('/'));

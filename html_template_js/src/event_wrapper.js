@@ -1,14 +1,15 @@
 if (!Prototype) throw ('Event.Wrapper require prototype.js');
 
 if(Prototype.Browser.IE)(function() {
-
-    var eventCache ={};
+    var eventCache   = {};
     var wrapperCache = {};
+
     function getEventCache(elementID,eventName){
         if(!eventCache[elementID])eventCache[elementID]={};
         if(!eventCache[elementID][eventName])eventCache[elementID][eventName]=[];
         return eventCache[elementID][eventName];
     }
+
     function createFixedOrderWrapper(elementID,eventName){
         var wrapper= function(event){
             getEventCache(elementID,eventName).each(function(func){
@@ -19,38 +20,43 @@ if(Prototype.Browser.IE)(function() {
         wrapperCache[elementID][eventName] = wrapper;
         return wrapper;
     }
+
     function getEventId(element) {
         return element._prototypeEventID || element._eventID;
     }
+
     function addEventListenerIE(element,eventName,func,capture){
-        var id = getEventId(element);
-        var length =getEventCache(id,eventName).push(func);
+        var id     = getEventId(element);
+        var length = getEventCache(id,eventName).push(func);
         if(length == 1){
             element.attachEvent('on'+eventName,createFixedOrderWrapper(id,eventName));
         }
     }
     function removeEventListenerIE(element,eventName,func,capture){
-        var id = getEventId(element);
-        var cache =getEventCache(id,eventName);
+        var id    = getEventId(element);
+        var cache = getEventCache(id,eventName);
         if(cache.length >0){
             eventCache[id][eventName]=cache.without(func);
             if(eventCache[id][eventName].length == 0){
-                element.detachEvent('on'+eventName,wrapperCache[id][eventName]);
+                element.detachEvent(
+                    'on'+eventName,
+                    wrapperCache[id][eventName]
+                );
             }
         }
     }
     
     Element.addMethods({
-        addEventListener:addEventListenerIE,
-        removeEventListener:removeEventListenerIE
+        addEventListener    : addEventListenerIE,
+        removeEventListener : removeEventListenerIE
     });
     Object.extend(window, {
-        addEventListener: addEventListenerIE.methodize(),
-        removeEventListener: removeEventListenerIE.methodize()
+        addEventListener    : addEventListenerIE.methodize(),
+        removeEventListener : removeEventListenerIE.methodize()
     });
     Object.extend(document, {
-        addEventListener: addEventListenerIE.methodize(),
-        removeEventListener: removeEventListenerIE.methodize()
+        addEventListener    : addEventListenerIE.methodize(),
+        removeEventListener : removeEventListenerIE.methodize()
     });
     (function(){
         var flag =true;
@@ -61,7 +67,7 @@ if(Prototype.Browser.IE)(function() {
             }
         });
         document.observe('dom:loaded',function(evt){
-            flag =false;
+            flag = false;
         });
     })();
 })(); 
