@@ -1,0 +1,48 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<title>Namespace Test</title>
+<html>
+<head>
+<title>Template Test</title>
+<link rel="stylesheet" href="../resources/test.css" type="text/css" />
+<script>
+<!--
+    var VERSION       = location.href.match(/version=([\d\.]+)/) ? '-'+RegExp.$1 : '';
+    var PROTOTYPE     = '../lib/prototype.js';
+    var UNIT_TEST     = '../lib/unittest.js';
+    var SRC_DIRECTORY = '../src/';
+    var TARGET_CODES  = [
+        'scriptsetting.js',
+        'scriptsetting.t.js?hoge=1&test=日本語&get=text',
+        'scriptsetting.t.js?hoge=2&test=日本語&get=text',
+        'scriptsetting.t.js',
+    ];
+    
+    document.writeln('<script src=\"'+ PROTOTYPE +'\"><\/script>');
+    document.writeln('<script src=\"'+ UNIT_TEST +'\"><\/script>');
+    for(var i = 0 ,T, l = TARGET_CODES.length;i<l; i++){
+        T = SRC_DIRECTORY + TARGET_CODES[i];
+        document.writeln('<script src=\"'+ T +'\"><\/script>');
+    }
+
+-->
+</script>
+</head>
+<body>
+<div id="testlog"></div>
+</body>
+<script language="javascript" type="text/javascript">
+<!--
+
+new Test.Unit.Runner({
+    testNamespace:function(){with(this){
+    	console.log(SETTING);
+    }}
+});
+
+-->
+</script>
+</html>
+
