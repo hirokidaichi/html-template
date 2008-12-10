@@ -27,7 +27,7 @@ HTML.Template = Class.create({
         new Ajax.Request(source, {
             method: 'get',
             onComplete  : function(req) {
-                this._source=req.responseText;
+                this._source = req.responseText;
                 this.compile();
                 this.isCompiled = true;
                 if(this.assignElement){
@@ -73,8 +73,7 @@ HTML.Template = Class.create({
             var tmpl = $A(elem.childNodes)
                 .select(function(m){return (m.nodeType==8)})
                  .map(function(m){return m.data}).join('');
-
-            this.storedName = 'dom:'+elem.identify()
+            this.storedName = 'dom:'+elem.identify();
             this._source    = tmpl;
             this.compile();
             this.isCompiled = true;
@@ -100,7 +99,7 @@ HTML.Template = Class.create({
         this._funcs  = {};
         this._chunks = [];
         this.isCompiled = false;
-
+        this.isParsed   = false;
         this.option     = this._guessOption(option);
         var initializer = this['_init'+this.option['type'].capitalize()];
         if( initializer ){
@@ -163,7 +162,7 @@ HTML.Template = Class.create({
     },
     parse: function() {
         var source = this._source;
-        this.root = HTML.Template.createElement('root', {
+        this.root  = HTML.Template.createElement('root', {
             closeTag: false
         });
         this._chunks.push(this.root);
@@ -199,6 +198,8 @@ HTML.Template = Class.create({
         this._chunks.push(HTML.Template.createElement('root', {
             closeTag: true
         }));
+        this._functionText  = this._chunks.map(function(e){return e.getCode()});
+        this.isParsed       = true;
         return this;
     },
     compile: function() {
@@ -272,9 +273,9 @@ Object.extend(HTML.Template,{
     ]),
     GLOBAL_FUNC     :{},
     Cache           :{},
-    useElementCache :true  ,
-    useLoopVariable :false ,
-    usePrerender    :true  ,
+    useLoopVariable :false ,// Loop中の__index__などを使用する/しない
+    usePrerender    :true  ,// DocumentFragmentとしてDOMオブジェクトを事前作成しておく
+    useDomStorage   :true  ,// DomStorageに関数textを保存し、parseをスキップする。
     ElementCache    :{},
     watchCache:function() {
         var ret = [];
@@ -312,7 +313,7 @@ Object.extend(HTML.Template,{
     precompileBySelector:function(selector){
         $$(selector).each(function(e){
             var tmpl = $A(e.childNodes)
-                       .select(function(m){return (m.nodeType==8)})
+                       .select(function(m){return (m.nodeType == 8)})
                            .map(function(m){return m.data})
                                .join('');
             HTML.Template.load('dom:'+e.identify(),tmpl);
