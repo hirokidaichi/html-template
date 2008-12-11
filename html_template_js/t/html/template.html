@@ -5,7 +5,6 @@
 <link rel="stylesheet" href="../../resources/test.css" type="text/css" />
 <script>
 <!--
-    var first         = (new Date).getTime();
     var ar = [];
     var VERSION       = location.href.match(/version=([\d\.]+)/) ? '-'+RegExp.$1 : '';
     var PROTOTYPE     = '../../lib/prototype.js';
@@ -15,10 +14,12 @@
         'event_wrapper.js',
         'html/template'+VERSION+'.js'
     ];
-
+    /*etInterval(function(){
+        ar.push((new Date).getTime());
+    },10);*/
     document.writeln('<script src=\"'+ PROTOTYPE +'\"><\/script>');
     document.writeln('<script src=\"'+ UNIT_TEST +'\"><\/script>');
-    for(var i = 0 ,T, l = TARGET_CODES.length;i<l; i++){
+    for(var i = 0 ,T , l = TARGET_CODES.length;i<l; i++){
         T = SRC_DIRECTORY + TARGET_CODES[i];
         document.writeln('<script src=\"'+ T +'\"><\/script>');
     }
@@ -90,8 +91,7 @@ var COMPLEX_TMPL =[
 ].join('\n');
 
 document.observe('dom:loaded',function(){
-    console.log((new Date).getTime()-first);
-    console.log(ar.length);
+
 new Test.Unit.Runner({
     testNamespace:function(){with(this){
         assert(HTML.Template                ,'HTML.Template');

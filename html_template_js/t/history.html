@@ -1,0 +1,66 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<title>Namespace Test</title>
+<html>
+<head>
+<title>Template Test</title>
+<link rel="stylesheet" href="../resources/test.css" type="text/css" />
+<script>
+<!--
+    var VERSION       = location.href.match(/version=([\d\.]+)/) ? '-'+RegExp.$1 : '';
+    var PROTOTYPE     = '../lib/prototype.js';
+    var UNIT_TEST     = '../lib/unittest.js';
+    var SRC_DIRECTORY = '../src/';
+    var TARGET_CODES  = [
+        'namespace.js',
+    ];
+    
+    document.writeln('<script src=\"'+ PROTOTYPE +'\"><\/script>');
+    document.writeln('<script src=\"'+ UNIT_TEST +'\"><\/script>');
+    for(var i = 0 ,T, l = TARGET_CODES.length;i<l; i++){
+        T = SRC_DIRECTORY + TARGET_CODES[i];
+        document.writeln('<script src=\"'+ T +'\"><\/script>');
+    }
+
+-->
+</script>
+</head>
+<body>
+<div id="testlog"><img id="image"></div>
+
+
+</body>
+<script language="javascript" type="text/javascript">
+<!--
+
+var CONTENTS = [
+"http://www.e-hon.jp/saruka/sar1.jpg", "http://www.e-hon.jp/saruka/sar2.jpg", "http://www.e-hon.jp/saruka/sar3.jpg", "http://www.e-hon.jp/saruka/sar4.jpg", "http://www.e-hon.jp/saruka/sar5.jpg", "http://www.e-hon.jp/saruka/sar6.jpg", "http://www.e-hon.jp/saruka/sar7.jpg", "http://www.e-hon.jp/saruka/sar8.jpg", "http://www.e-hon.jp/saruka/sar9.jpg", "http://www.e-hon.jp/saruka/sar10.jpg"
+];
+
+CONTENTS.each(function(e,i){
+    location.hash = "#"+i;
+    new Element('img',{src:e});
+
+});
+CONTENTS.length.times(function(i){
+    history.back();
+});
+var prev = '';
+setInterval(
+    function(){
+        if(prev == location.hash){
+        
+        }else{
+            prev = location.hash;
+            var i = parseInt(prev.split('#')[1]) || 0;
+            $('image').src = CONTENTS[i];
+        }
+    },
+    10
+);
+-->
+</script>
+</html>
+
