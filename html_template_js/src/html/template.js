@@ -1,7 +1,8 @@
 
 if (!Prototype) throw ('HTML.Template require prototype.js');
-//window.localStorage = window.localStorage || window.globalStorage[location.hostname];
+
 var HTML = {};
+
 HTML.Template = Class.create({
     _guessOption:function(option){
         if ( Object.isString(option) ){
@@ -242,7 +243,6 @@ HTML.Template = Class.create({
         return this.output();
     }
 });
-
 Object.extend(HTML.Template,{
     VERSION           : '0.4.3',
     DEFAULT_SELECTOR  : '.HTML_TEMPLATE',
@@ -304,6 +304,7 @@ Object.extend(HTML.Template,{
         }
         return ret.toString(16)+'-'+(pos & 0x00ff).toString(16) ;
     },
+
     createElement : function(type, option) {
         return new HTML.Template[type.toUpperCase() + 'Element'](option);
     },

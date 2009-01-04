@@ -1,4 +1,5 @@
-(function(ownNamespace) {
+
+(function() {
     var cache = {};
     var MESSAGE ={
         NOREF : ':: namespace error ::not found\t',
@@ -6,16 +7,16 @@
         REQUIRE:':: namespace error ::require\t',
         DYNAMIC:':: namespace error ::dynamic'
     };
-    var ownNamespace = _createOrUse(ownNamespace)
-
+    var ownNamespace = _createOrUse(export_queryParams().base || '__PACKAGE__');
+    var fileRoot     = export_queryParams().root || '/static/js';
     Object.extend(ownNamespace,{
         createNamespace: export_createNamespace,
-        isLoaded: export_isLoaded,
-        depends : export_depends,
-        dynamic : export_dynamic,
-        using   : export_using,
-        dumpCache:export_dumpCache,
-        INCLUDE : '/static/js/'
+        isLoaded    : export_isLoaded,
+        depends     : export_depends,
+        dynamic     : export_dynamic,
+        using       : export_using,
+        dumpCache   : export_dumpCache,
+        queryParams : export_queryParams
     });
 
     function _truncateFQN(fqn, n) {
@@ -47,7 +48,12 @@
             throw(new Error(MESSAGE.NOREF));
         }
     };
-
+    function export_queryParams(){
+        var src = $A(document.getElementsByTagName('script')).last().src;
+        var obj = src.toQueryParams();
+        obj.src = src.split("?")[0];
+        return obj;
+    }
     function export_dumpCache(){
         console.log(cache);
     }
@@ -162,6 +168,7 @@
             return ret;
         }
     };
+    window['__PACKAGE__'] = ownNamespace;
+})();
 
-})('JS.Namespace');
 
