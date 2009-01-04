@@ -1,0 +1,39 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<title>Namespace Test</title>
+<meta content='{"name": "MyApplication", "root": "../../src/", "depends": [["HTML.Template", {"timestamp": 1245343}], "Event.Custom", "FormValidator"], "require": ["MyApplication.Test", "MyApplication.Test2", "MyApplication.Test3"]}' name="APPLICATION_INFO"/>
+<link rel="stylesheet" href="../../resources/test.css" type="text/css" />
+
+<script language="javascript" type="text/javascript">
+<!--/* INLINE_INFOMATION */
+
+(function(h,p,a){
+	var d = document;
+	var ps = d.createElement('script');
+	var as = d.createElement('script');
+	ps.src=p;as.src=a;
+	h.appendChild(ps);	h.appendChild(as);
+})(document.getElementsByTagName('head')[0],"../../lib/prototype.js","../../src/acedia.js");
+-->
+</script>
+</head>
+<body>
+<div id="testlog"></div>
+<div id="urltest"></div>
+<div id="test_tmpl" class="HTML_TEMPLATE">
+<!--
+hello!
+-->
+</div>
+<script language="javascript" type="text/javascript">
+<!--/* INLINE_INFOMATION */
+20..times(function(i){
+	document.writeln('<img src="../../resources/test.jpg?'+(new Date).getTime()+'">');
+});
+-->
+</script>
+</body>
+</html>
+

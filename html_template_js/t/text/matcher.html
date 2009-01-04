@@ -1,0 +1,141 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<title>Namespace Test</title>
+<html>
+<head>
+<title>Template Test</title>
+<link rel="stylesheet" href="../../resources/test.css" type="text/css" />
+<script>
+<!--
+    var VERSION       = location.href.match(/version=([\d\.]+)/) ? '-'+RegExp.$1 : '';
+    var PROTOTYPE     = '../../lib/prototype.js';
+    var UNIT_TEST     = '../../lib/unittest.js';
+    var SRC_DIRECTORY = '../../src/';
+    var TARGET_CODES  = [
+        'text/matcher.js',
+    ];
+    
+    document.writeln('<script src=\"'+ PROTOTYPE +'\"><\/script>');
+    document.writeln('<script src=\"'+ UNIT_TEST +'\"><\/script>');
+    for(var i = 0 ,T, l = TARGET_CODES.length;i<l; i++){
+        T = SRC_DIRECTORY + TARGET_CODES[i];
+        document.writeln('<script src=\"'+ T +'\"><\/script>');
+    }
+
+-->
+</script>
+</head>
+<body>
+<div id="testlog"></div>
+
+<input type="text" id="text"><input type="button" id="button">
+<div id="list">
+</div>
+</body>
+<script language="javascript" type="text/javascript">
+<!--
+
+document.observe('dom:loaded',function(){
+	var text = $('text');
+	var preValue = $F('text');
+	var list = $('list');
+	var button = $('button');
+	setInterval(function(){
+		if(preValue != $F('text')){
+			var s=tm.search(text.value);
+			list.update(Object.toJSON(s));
+		}
+	},10);
+
+});
+var src = [
+"CLANNAD",           "The World of GOLDEN EGGS",
+"グレンラガン",      "ひぐらしのなく頃に解",
+"プリズム・アーク",  "レンタルマギカ",
+"もっけ",            "もやしもん",
+"こどものじかん",    "さよなら絶望先生",
+
+"みなみけ",          "キミキス",
+"ガンダム00",        "地獄少女",
+"ハヤテのごとく！",  "デルトラクエスト",
+"ニニンがシノブ伝",  "吉永さん家のガーゴイル",
+"ワンピース",        "ゲゲゲの鬼太郎",
+
+"電脳コイル",        "ちびまる子ちゃん",
+"銀魂",              "D.C.II",
+"らき☆すた",        "こちら葛飾区亀有公園前派出所",
+"ぽてまよ",          "ぺとぺとさん",
+"あたしンち",        "しゅごキャラ！",
+
+"大江戸ロケット",    "魔法少女リリカルなのは",
+"ゼロの使い魔",      "ラーゼフォン",
+"らいむいろ戦奇譚",  "アイドルマスター XENOGLOSSIA",
+"創聖のアクエリオン","交響詩篇エウレカセブン",
+"ぼくらの",          "コードギアス 反逆のルルーシュ",
+
+"スカイガールズ",    "おねがいマイメロディ",
+"ふたりはプリキュア","おとぎ銃士赤ずきん",
+"ぱにぽにだっしゅ！","苺ましまろ",
+"BECK",              "ハチミツとクローバー",
+"舞-HiME",           "月詠 -MOON PHASE-",
+
+"エル・カザド",        "BAMBOO BLADE",
+"スケッチブック",      "Over Drive",
+"素敵探偵☆ラビリンス","がくえんゆーとぴあ まなびストレート！",
+"武装錬金 ",           "すもももももも 地上最強のヨメ",
+"スクールランブル",    "ローゼンメイデン トロイメント",
+
+"明日のナージャ",       "一騎当千",
+"宇宙のステルヴィア",   "エアマスター",
+"おねがい☆ツインズ",   "カレイドスター",
+"GADGUARD",             "GUNSLINGER GIRL",
+"ガンパレード・マーチ", "キノの旅",
+
+"君が望む永遠",        "舞-乙HiME",
+"まじかるカナン",      "まほらば",
+"ミルモでポン！",      "蟲師",
+"MAJOR",               "ラムネ",
+"極上生徒会",          "かりん",
+
+"あずまんが大王",      "十二国記",
+"アクエリアンエイジ",  "テニスの王子様",
+"光と水のダフネ",      "シャーマンキング",
+"ぶぶチャチャ",        "ジャングルはいつもハレのちグゥ",
+"フルーツバスケット",  "HELLSING",
+
+"ななか6/17",          "成恵の世界",
+"なるたる",            "ジパング",
+"機動戦士ガンダムSEED","げんしけん",
+"うた∽かた",          "エルフェンリート",
+"ゾイド -ZOIDS-",      "HUNTER×HUNTER"
+];
+var tm = new Text.Matcher();
+
+for(;src.length;){
+	var t = src.shift();
+	tm.append(t,{title:t});
+}
+
+new Test.Unit.Runner({
+    testBenchRegexp:function(){with(this){
+        benchmark(function(){
+            tm._searchByRegExp('ガン');
+        },1000);
+    }},
+    testBenchIndexOf:function(){with(this){
+        benchmark(function(){
+            tm._searchByIndexOf('ガン');
+        },1000);
+    }}
+});
+window.onunload=function(){
+	alert('unload');
+	window.onunload=null;	
+}
+
+-->
+</script>
+</html>
+

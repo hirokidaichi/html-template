@@ -1,0 +1,74 @@
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+<title>Namespace Test</title>
+<head>
+<title>Template Test</title>
+<link rel="stylesheet" href="../../resources/test.css" type="text/css" />
+<script src="../../lib/prototype.js"></script>
+<script language="javascript" type="text/javascript">
+<!--/* BUILD_INFOMATION */
+document.writeln("<meta name='APPLICATION_INFO' content='"+Object.toJSON(
+{
+	name	: "MyApplication",
+	root	: "../../src/",
+	/*model	: {
+		root   : '../../src/my_application/model/',
+		suffix : '?method=model',
+		target : ['test.pl','hoge.pl']
+	},*/
+	/*depends	: [["HTML.Template",{timestamp:1245343}],"Event.Custom","FormValidator"],
+	require	: ["MyApplication.Test","MyApplication.Test2","MyApplication.Test3"]*/
+})+"'>");
+-->
+</script>
+<script src="../../src/acedia.js"></script>
+<script src="../../lib/unittest.js"></script>
+
+<script src="../../src/html/template.js"></script>
+<script src="../../src/event/custom.js"></script>
+<script src="../../src/form_validator.js"></script>
+
+
+<script language="javascript" type="text/javascript">
+<!--/* INLINE_INFOMATION */
+
+MyApplication.Model.regist({
+	url : 'model/test.pl',
+	initialValue:{
+	
+	},
+	method:{
+		get:{
+			validate:[],
+			message :[]
+		}
+	}
+});
+
+-->
+</script>
+</head>
+<body>
+<div id="testlog"></div>
+<div id="urltest"></div>
+<div id="test_tmpl" class="HTML_TEMPLATE">
+<!--
+hello!
+-->
+</div>
+<script language="javascript" type="text/javascript">
+<!--/* INLINE_INFOMATION */
+20..times(function(i){
+	document.writeln('<img src="../../resources/test.jpg?'+(new Date).getTime()+'">');
+});
+
+-->
+</script>
+</body>
+<script src="../../src/my_application/test.js"></script>
+<script src="../../src/my_application/test2.js"></script>
+<script src="../../src/my_application/test3.js"></script>
+</html>
+
