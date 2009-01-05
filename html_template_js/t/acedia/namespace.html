@@ -1,25 +1,20 @@
-﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html>
 <head>
 <title>Namespace Test</title>
-<meta content='{"name": "MyApplication", "root": "../../src/", "depends": [["HTML.Template", {"timestamp": 1245343}], "Event.Custom", "FormValidator"], "require": ["MyApplication.Test", "MyApplication.Test2", "MyApplication.Test3"]}' name="APPLICATION_INFO"/>
-<link rel="stylesheet" href="../../resources/test.css" type="text/css" />
-
+<meta content='{"NAME": "MyApplication", "ROOT": "../../src/", "DEPENDS": [["HTML.Template", {"timestamp": 1245343}], "Event.Custom", "FormValidator"], "REQUIRE": ["MyApplication.Test", "MyApplication.Test2", "MyApplication.Test3"]}' name="APPLICATION_INFO"/>
 <script language="javascript" type="text/javascript">
 <!--/* INLINE_INFOMATION */
 
-(function(h,p,a){
-	var d = document;
-	var ps = d.createElement('script');
-	var as = d.createElement('script');
-	ps.src=p;as.src=a;
-	h.appendChild(ps);	h.appendChild(as);
-})(document.getElementsByTagName('head')[0],"../../lib/prototype.js","../../src/acedia.js");
+var StartTime = (new Date).getTime();
 -->
 </script>
+
+<link rel="stylesheet" href="../../resources/test.css" type="text/css" />
+<script src="../../lib/prototype.js"></script>
+<script src="../../src/acedia.js"></script>
 </head>
 <body>
+
 <div id="testlog"></div>
 <div id="urltest"></div>
 <div id="test_tmpl" class="HTML_TEMPLATE">
@@ -27,13 +22,16 @@
 hello!
 -->
 </div>
+<div>
 <script language="javascript" type="text/javascript">
 <!--/* INLINE_INFOMATION */
-20..times(function(i){
-	document.writeln('<img src="../../resources/test.jpg?'+(new Date).getTime()+'">');
+50..times(function(i){
+	document.writeln('<img style="width:1px;height:1px;" src="http://img.mixi.jp/img/basic/common/mixilogo002.gif?'+(new Date).getTime()+'">');
 });
 -->
 </script>
+</div>
 </body>
+
 </html>
 
