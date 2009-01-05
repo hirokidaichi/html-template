@@ -1,6 +1,2 @@
-MyApplication.Model.create('Friend')
-    .method();
 
-MyApplication.createNamespace('MyApplication.Test',function(){
-   
-});
+//console.log('test.js'+((new Date).getTime()-StartTime));
