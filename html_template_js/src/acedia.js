@@ -73,9 +73,9 @@
     var INFO = topLevel.APPLICATION_INFO;
     if(INFO['MODEL']){
         var head   = $$('head')[0];
-        var target = applicationInfo['model'].TARGET || [];
-        var root   = applicationInfo['model'].ROOT   || '/';
-        var suffix = applicationInfo['model'].SUFFIX || '';
+        var target = INFO['model'].TARGET || [];
+        var root   = INFO['model'].ROOT   || '/';
+        var suffix = INFO['model'].SUFFIX || '';
         $A(TARGET).each(function(e){
             head.appendChild(new Element('script',{src:ROOT+e+SUFFIX}));
         });
@@ -366,4 +366,72 @@
         }
     };
 })
+.appendModule('View',function(topLevel){
+/*
+
+var X=Class.create({
+    initialize:function(){
+
+    },
+    getCallerElement:function(){
+        var list = ['callee','caller','caller','caller','arguments'];
+        var top  = arguments;
+        for(var i = 0,length=list.length;i<length;i++){
+            var next = top[list[i]];
+            if(!next){
+                top = undefined;
+                break;
+            }
+            top = next;
+        }
+        if(top && top[0] && Object.isElement(top[0]) ){
+            return top[0];
+        }else{
+            throw('cannot call');
+        }
+    },
+    toHTML:function(){
+        var element = this.getCallerElement();
+        return 'X';
+    }
+});
+
+$(document.body).update(new X);
+$(document.body).insert(new X);
+
+*/
+    var viewCache    = {};
+    var recentViewId = 1;
+    Object.extend(this,{
+        addModule:function(module,mixinObject){
+           module = (Object.isString(module)) ? topLevel.Namespace.use(module) : module;
+           if(!Object.isFunction(module)){
+               throw('e');
+           }
+           if(module.__VIEW_ID){
+               throw('o');
+           }else{
+               module.__VIEW_ID = recentViewId++;
+               viewCache[module.__VIEW_ID] = module;
+               Object.extend(module.prototype,mixinObject);
+               Object.extend(module.prototype,{
+                   toHTML:function(){
+                   
+                   
+                   }
+               });
+           }
+        },
+        create:function(name,instance){
+        
+        
+        }
+    });
+    
+})
+.appendModule('UIComponent',function(){
+
+
+});
+
 
