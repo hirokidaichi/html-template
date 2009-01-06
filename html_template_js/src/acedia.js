@@ -200,9 +200,10 @@
         REQUIRE:':: namespace error ::require\t',
         DYNAMIC:':: namespace error ::dynamic'
     };
-    var cache = {};
-    var fileRoot      = INFO.ROOT ;
-    this.Global = {};
+    var cache    = {};
+    var fileRoot = INFO.ROOT ;
+    this.Global  = {};
+
     Object.extend(this.Global,{
         create      : export_createNamespace,
         isLoaded    : export_isLoaded,
@@ -211,6 +212,7 @@
         using       : export_using,
         dumpCache   : export_dumpCache,
     });
+    
     Object.extend(this,$H(this.Global).inject({},function(wrapped,e){
         wrapped[e.key] =e.value.wrap(function(){
             var args = $A(arguments);
@@ -218,8 +220,9 @@
             args[0]=INFO.NAME+"."+args[0];
             return original.apply(this,args);
         });
-        return wrapped
+        return wrapped;
     }));
+
     this.Global.create(INFO.NAME,Prototype.emptyFunction,topLevel);
     function _truncateFQN(fqn, n) {
         var leaves = fqn.split(".");
@@ -367,64 +370,130 @@
     };
 })
 .appendModule('View',function(topLevel){
-/*
+    var _self = this;
 
-var X=Class.create({
-    initialize:function(){
-
-    },
-    getCallerElement:function(){
-        var list = ['callee','caller','caller','caller','arguments'];
-        var top  = arguments;
-        for(var i = 0,length=list.length;i<length;i++){
-            var next = top[list[i]];
-            if(!next){
-                top = undefined;
-                break;
+    Element.Methods.update['__SYMBOL__']  = 'update';
+    Element.Methods.insert['__SYMBOL__']  = 'insert';
+    Element.Methods.replace['__SYMBOL__'] = 'replace';
+    Element.addMethods({
+        isAssigned:function(){
+            return !!(this.element.parentNode);
+        }
+    })
+    /*
+     * 
+     *
+     */
+    var DOMTemplate = Class.create({
+        initialize:function(instance){
+            this.element = instance;
+        }
+    });
+    var ViewWrapper = Class.create({
+        initialize:function(viewModule){
+            this.view = viewModule;
+            this.actionList = {
+                update :[],
+                insert :[],
+                replace:[]
+            };
+        },
+        _getCallerElement:function(){
+            var limit = 5;
+            var now   = arguments.callee;
+            for(;limit;limit--){
+                now = now.caller;
+                if(!now){
+                    return ;
+                }
+                if(now.__SYMBOL__){
+                    return {
+                        element:now.arguments[0],
+                        type   :now.__SYMBOL__
+                    };
+                }
             }
-            top = next;
-        }
-        if(top && top[0] && Object.isElement(top[0]) ){
-            return top[0];
-        }else{
-            throw('cannot call');
-        }
-    },
-    toHTML:function(){
-        var element = this.getCallerElement();
-        return 'X';
-    }
-});
+            return ;
 
-$(document.body).update(new X);
-$(document.body).insert(new X);
-
-*/
+        },
+        render:function(){
+            return this.view.toString();
+        },
+        addActionHandler:function(eventType,handler){
+            this.actionList[eventType].push(handler);
+            return this;
+        },
+        setParameter:function(params){
+           this.params = params;
+        },
+        toHTML:function(){
+            var env   = this._getCallerElement();
+            var _self = this;
+            if(env){
+                (function(){
+                    _self.actionList[env.type].each(function(action){
+                        action.apply(_self,[((env.type == 'replace')?env.element.parentNode:env.element)]);
+                    });
+                }).defer();
+            }
+            return this.render();
+        }
+    });
     var viewCache    = {};
     var recentViewId = 1;
-    Object.extend(this,{
+    Object.extend( _self ,{
         addModule:function(module,mixinObject){
-           module = (Object.isString(module)) ? topLevel.Namespace.use(module) : module;
-           if(!Object.isFunction(module)){
-               throw('e');
-           }
-           if(module.__VIEW_ID){
-               throw('o');
-           }else{
-               module.__VIEW_ID = recentViewId++;
-               viewCache[module.__VIEW_ID] = module;
-               Object.extend(module.prototype,mixinObject);
-               Object.extend(module.prototype,{
-                   toHTML:function(){
-                   
-                   
-                   }
-               });
-           }
+            module = (Object.isString(module)) ? topLevel.Namespace.Global.using(module) : module;
+            if(!Object.isFunction(module)){
+                throw('e');
+            }
+            if( module.__VIEW_ID && viewCache[module.__VIEW_ID] ){
+                viewCache[module.__VIEW_ID] = Object.extend(viewCache[module.__VIEW_ID],mixinObject);
+                return _self;
+            }else{
+                module.__VIEW_ID = module.__VIEW_ID || recentViewId++;
+                viewCache[module.__VIEW_ID] = Class.create(ViewWrapper,mixinObject);
+                return _self;
+            }
         },
-        create:function(name,instance){
-        
-        
+        create:function(instance){
+            var module = viewCache[
+                (Object.isElement(instance))
+                ? DOMTemplate
+                : instance.constructor.__VIEW_ID
+            ];
+            if(module){
+                return new module(instance);
+            }
+        }
+    });
+    _self.addModule(DOMTemplate,{
+        render:function(){
+            return this.element;
+        },
+        toElement:function(){
+            var env   = this._getCallerElement();
+            var _self = this;
+            if(env){
+                (function(){
+                    _self.actionList[env.type].each(function(action){
+                        action.apply(_self,[env.element]);
+                    });
+                }).defer();
+                if(env.element && env.element === this.element){
+                    
+                }else{
+                    
+                }
+            }
+         }
+    });
+    _self.addModule(Template,{
+        setParameter:function( params ){
+            this.params = params;
+        },
+        render:function(){
+            return this.view.evaluate( this.params );
         }
     });
     
