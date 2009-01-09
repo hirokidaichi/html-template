@@ -1,3 +1,4 @@
+
 (function() {
     return new (Class.create({
         initialize:function(){
@@ -492,7 +493,6 @@
             }
          }
      });
- 
      _self.addModule(Template,{
         setParameter:function( params ){
             this.params = params;
@@ -507,5 +507,11 @@
 
 
 });
-
+console.log('framework compile\t'+((new Date).getTime()-test));
+document.observe('dom:loaded',function(){
+    console.log('dom:loaded\t'+((new Date).getTime()-test));
+});
+Event.observe(window,'load',function(){
+    console.log('window load\t'+((new Date).getTime()-test));
+});
 
