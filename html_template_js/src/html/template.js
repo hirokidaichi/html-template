@@ -69,7 +69,7 @@ HTML.Template = Class.create({
         }
     },
     _initElement:function( source ){
-        var elem = $('source');
+        var elem = $(source);
         if ( Object.isElement(elem) ) {
             var tmpl = $A(elem.childNodes)
                 .select(function(m){return (m.nodeType==8)})
@@ -93,6 +93,23 @@ HTML.Template = Class.create({
         if (HTML.Template.Cache[this.storedName]) {
             this._output = HTML.Template.Cache[this.storedName];
             this.isCompiled = true;
+        }else{
+            var segment = source.split(':');
+            var _self   = this;
+            ({
+                dom:function(){
+                    var element = segment[1];
+                    _self._initElement(element);
+                },
+                url:function(){
+                    var url = segment[1];
+                    _self.option[element] = document;
+                    _self._initUrl(url);
+                },
+                autocache:function(){
+                    throw(new Error(' not in cache '));
+                }
+            })[segment[0]]();
         }
     },
     initialize: function(option) {
@@ -239,12 +256,15 @@ HTML.Template = Class.create({
             return this._output();
         }
     },
+    toString:function(){
+        return this.output() || '__UNCOMPILED__';
+    },
     toHTML: function(){
         return this.output();
     }
 });
 Object.extend(HTML.Template,{
-    VERSION           : '0.4.3',
+    VERSION           : '0.5',
     DEFAULT_SELECTOR  : '.HTML_TEMPLATE',
     DEFERRED_SELECTOR : '.HTML_TEMPLATE_DEFERRED',
     CHUNK_REGEXP:(function(escapeChar,expArray){
@@ -273,9 +293,8 @@ Object.extend(HTML.Template,{
     ]),
     GLOBAL_FUNC     :{},
     Cache           :{},
-    useLoopVariable :false ,// Loop中の__index__などを使用する/しない
+    useLoopVariable :true  ,// Loop中の__index__などを使用する/しない
     usePrerender    :true  ,// DocumentFragmentとしてDOMオブジェクトを事前作成しておく
-    useDomStorage   :true  ,// DomStorageに関数textを保存し、parseをスキップする。
     ElementCache    :{},
     watchCache:function() {
         var ret = [];
@@ -313,11 +332,10 @@ Object.extend(HTML.Template,{
     },
     precompileBySelector:function(selector){
         $$(selector).each(function(e){
-            var tmpl = $A(e.childNodes)
-                       .select(function(m){return (m.nodeType == 8)})
-                           .map(function(m){return m.data})
-                               .join('');
-            HTML.Template.load('dom:'+e.identify(),tmpl);
+            new HTML.Template({
+                type:'element',
+                source:e
+            });
         });
     }
 });
@@ -507,14 +525,6 @@ HTML.Template.UNLESSElement = Class.create(HTML.Template.IFElement, {
         return "!" + this.getParam(param);
     }
 });
-
-HTML.Template.load = function(name,value){
-    new HTML.Template({
-        type:'load',
-        source:value,
-        name:name
-    });
-};
 
 if(HTML.Template.usePrerender){
     Object.extend(Object,{

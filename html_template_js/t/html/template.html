@@ -62,7 +62,8 @@ Case-1<div>xx</div>
 
 <div id="test01_tmpl" class="HTML_TEMPLATE"><!--<TMPL_LOOP NAME="loop"><TMPL_VAR NAME="test"></TMPL_LOOP>*--></div>
 <div id="test02_tmpl" class="HTML_TEMPLATE"><!--hello<TMPL_LOOP NAME='outer'><TMPL_INCLUDE NAME='dom:test01_tmpl'></TMPL_LOOP>hello--></div>
-
+<div id="test03_tmpl" ><!--<TMPL_LOOP NAME="loop"><TMPL_VAR NAME="test"></TMPL_LOOP>*--></div>
+<div id="test04_tmpl" class="HTML_TEMPLATE"></div>
 </body>
 <script language="javascript" type="text/javascript">
 <!--
@@ -89,7 +90,6 @@ var COMPLEX_TMPL =[
     '<img src="../../resources/test.jpg">',
     '</p>'
 ].join('\n');
-var HHH = "123412341234123412345tmplsfkweopkgeptmpwledptgmerkf,omhbiaekgowk0rihjikfoejgi3ejrfeokfoewmovjkteof,owejogkweorfkokewfogmwojfmoewmowkjtoewlmfowejgeowkowegvorjgoe";
 document.observe('dom:loaded',function(){
 
 new Test.Unit.Runner({
@@ -250,6 +250,15 @@ new Test.Unit.Runner({
                 {test:3}
             ]
         }));
+        var test03 = new HTML.Template('dom:test03_tmpl');
+        test03.param({
+            loop:[
+                {test:1},
+                {test:2},
+                {test:3}
+            ]
+        });
+        assertEqual(test03.output(),'123*');
     }},
     testRender:function(){with(this){
         var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
