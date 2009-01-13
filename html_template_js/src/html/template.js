@@ -6,7 +6,12 @@ var HTML = {};
 HTML.Template = Class.create({
     _guessOption:function(option){
         if ( Object.isString(option) ){
-            return {type:'name',source:option}
+            var pos = option.indexOf(':');
+            if(pos > 0 && pos < 10 ){
+                return {type:'name',source:option}
+            }else{
+                return {type:'text',source:option}
+            }
         }
         else if ( Object.isFunction(option) ){
             return {type:'function',source:option}
@@ -19,15 +24,21 @@ HTML.Template = Class.create({
         }
         return option;
     },
-    _initUrl:function(){
+    _initUrl:function(source){
         this._source = 'contentUnload';
-        if(this.option['element'] && Object.isElement(this.option['element'])){
-            this.assignElement = this.option['element'];
+        if(this.option['element'] && (Object.isElement(this.option['element']) || this.option['element'] === document )){            this.assignElement = this.option['element'];
         }
         this.storedName = "url:"+source;
+        if(this.isCompiled && this.assignElement ){
+            var _self = this;
+            (function(){
+                _self.assignElement.fire('htmltemplate:compiled',_self);
+            }).defer();
+            return ;
+        }
         new Ajax.Request(source, {
             method: 'get',
-            onComplete  : function(req) {
+            onSuccess  : function(req) {
                 this._source = req.responseText;
                 this.compile();
                 this.isCompiled = true;
@@ -70,7 +81,7 @@ HTML.Template = Class.create({
     },
     _initElement:function( source ){
         var elem = $(source);
-        if ( Object.isElement(elem) ) {
+        if ( Object.isElement(elem) && !this.isCompiled) {
             var tmpl = $A(elem.childNodes)
                 .select(function(m){return (m.nodeType==8)})
                  .map(function(m){return m.data}).join('');
@@ -93,24 +104,24 @@ HTML.Template = Class.create({
         if (HTML.Template.Cache[this.storedName]) {
             this._output = HTML.Template.Cache[this.storedName];
             this.isCompiled = true;
-        }else{
-            var segment = source.split(':');
-            var _self   = this;
-            ({
-                dom:function(){
-                    var element = segment[1];
-                    _self._initElement(element);
-                },
-                url:function(){
-                    var url = segment[1];
-                    _self.option[element] = document;
-                    _self._initUrl(url);
-                },
-                autocache:function(){
-                    throw(new Error(' not in cache '));
-                }
-            })[segment[0]]();
         }
+        var segment = source.split(':');
+        var _self   = this;
+        ({
+            dom:function(){
+                var element = segment[1];
+                _self._initElement(element);
+            },
+            url:function(){
+                var url = segment[1];
+                _self.option['element'] = document;
+                _self._initUrl(url);
+            },
+            autocache:function(){
+                throw(new Error(' not in cache '));
+            }
+        })[segment[0]]();
+        
     },
     initialize: function(option) {
         this._param  = {};

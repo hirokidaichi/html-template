@@ -190,6 +190,13 @@ new Test.Unit.Runner({
         assertEqual('hello123*123*hello',tmpl.output());
 
     }},
+    testURL:function(){with(this){
+        
+        document.observe('htmltemplate:compiled',function(evt){
+            console.log('htmltemplate_compiled:'+this.storedName);
+        }.bind(new HTML.Template('url:/html_template_js/tmpl/test.tmpl')));
+
+    }},
     testEXPR:function(){with(this){
         var x = new HTML.Template({type:'text',source:'<TMPL_VAR EXPR="func(test)">'});
         x.param({
