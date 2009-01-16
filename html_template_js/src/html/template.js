@@ -1,7 +1,14 @@
 
 if (!Prototype) throw ('HTML.Template require prototype.js');
-
-var HTML = {};
+if (! 
+    Prototype.Version
+    .split('.')
+    .zip([1,6,0])
+    .all(function(e){return (parseInt(e[0]) >= (e[1]||0)); })
+){
+    throw(new Error('HTML.Template require prototype 1.6.0 or later'));
+}
+var HTML = HTML || {};
 
 HTML.Template = Class.create({
     _guessOption:function(option){
@@ -171,7 +178,7 @@ HTML.Template = Class.create({
             }
         }
     },
-    clearParam:function(){
+    clearParams:function(){
         this._param = {};
     },
     clearFunctions:function(){
@@ -196,7 +203,7 @@ HTML.Template = Class.create({
         });
         this._chunks.push(this.root);
         while (source.length > 0) {
-            var results = source.match(HTML.Template.CHUNK_REGEXP);
+            var results = source.match(HTML.Template.CHUNK_REGEXP());
             if (!results) {
                 this._chunks.push(HTML.Template.createElement('text', source));
                 source = '';
@@ -262,6 +269,9 @@ HTML.Template = Class.create({
         }
         return false;
     },
+    query : function(type,arg) {
+        
+    },
     output: function() {
         if (this.checkCompiled()) {
             return this._output();
@@ -285,22 +295,39 @@ Object.extend(HTML.Template,{
         var regText = $A(expArray).map(function(e){
             return _escape(e);
         }).join('');
-        return new RegExp(regText);
+        var reg = undefined;
+
+        return function(){
+            if(!reg){
+                reg = new RegExp(regText);
+            }
+            return reg;
+        }
     })('%',[
-        "<",                // start
-        "(%/)?",            // is CloseTag?
-        "TMPL_",            // TMPL_ prefix
-        "(VAR|LOOP|IF|ELSE|ELSIF|UNLESS|INCLUDE)",
-        "%s*",                //
-        "(?:",              // Attributes
-            "(NAME|EXPR)=", //
-            "(?:",            //
-                "'([^'>]*)'|",//
-                '"([^">]*)"|',//
-                "([^%s=>]*)",//
-            ")",//
-        ")?",//
-        ">"//
+        "<",                                       //     start
+        "(%/)?",                                   // $1  closetag
+        "TMPL_",                                   //     prefix
+        "(VAR|LOOP|IF|ELSE|ELSIF|UNLESS|INCLUDE)", // $2  tagname suffix
+        "%s*",                                     //
+        "(?:",                                     // 
+            "(NAME|EXPR)=",                        // $3  attribute name
+            "(?:",                                 //
+                "'([^'>]*)'|",                     // $4  single quote value
+                '"([^">]*)"|',                     // $5  double quote value
+                "([^%s=>]*)",                      // $6  noquote value
+            ")",                                   //
+        ")?",                                      //
+        "%s*",                                     //
+        "((?:",                                    // $7 plugin attribute
+            "(?:%w)+=",                            // 
+            "(?:",                                 // 
+                "'(?:[^'>]*)'|",                   // 
+                '"(?:[^">]*)"|',                   // 
+                "(?:[^%s=>]*)",                    // 
+             ")",                                  //
+             "%s*",                                //
+        ")*)",                                     //
+        "%s*>"                                     //
     ]),
     GLOBAL_FUNC     :{},
     Cache           :{},
@@ -319,7 +346,6 @@ Object.extend(HTML.Template,{
         document.body.innerHTML = "<textarea style='width:100%;height:900px'>" + ret.join('') + "</textarea>";
         return ret.join('');
     },
-
     hashFunction  : function(string){
         var max = (1 << 31);
         var length = string.length;
@@ -352,8 +378,7 @@ Object.extend(HTML.Template,{
 });
 
 
-HTML.Template.Element = Class.create();
-HTML.Template.Element.prototype = {
+HTML.Template.Element = Class.create({
     initialize: function(option) {
         if (this.type == 'text') {
             this.value = option;
@@ -389,7 +414,7 @@ HTML.Template.Element.prototype = {
         ].join('');
     },
     // HTML::Template::Pro shigeki morimoto's extension
-    pathLike: function(attribute , matched){
+    _pathLike: function(attribute , matched){
         var pos = (matched == '/')?'0':'_CONTEXT.length -'+(matched.split('..').length-1);
         return  [
             "((_CONTEXT["+pos+"]['"        , 
@@ -404,28 +429,37 @@ HTML.Template.Element.prototype = {
         if (this.attributes['name']) {
             var matched = this.attributes['name'].match(/^(\/|(?:\.\.\/)+)(\w+)/);
             if(matched){
-                return this.pathLike(matched[2],matched[1]);
+                return this._pathLike(matched[2],matched[1]);
             }
             return  [
-                "((_TOP_LEVEL['"        , 
-                this.attributes['name'] ,
-                "']) ? _TOP_LEVEL['"    ,
-                this.attributes['name'] , 
+                "((_TOP_LEVEL['"            , 
+                    this.attributes['name'] ,
+                "']) ? _TOP_LEVEL['"        ,
+                    this.attributes['name'] , 
                 "'] : undefined )"
             ].join('');
         }
         if (this.attributes['expr']) {
-            return [
+            var replaced = this.attributes['expr'].replace(/{(\/|(?:\.\.\/)+)(\w+)}/g,function(full,matched,param){
+                return [
+                     '_CONTEXT[',
+                     (matched == '/')?'0':'_CONTEXT.length -'+(matched.split('..').length-1),
+                     ']["',param,'"]'
+                ].join('');
+            });
+            var ret= [
                 "(function(){",
                 "    with(_GLOBAL_FUNCTION){",
                 "        with(this._funcs){",
                 "            with(_TOP_LEVEL){",
-                "                return ", this.attributes['expr'] ,';',
+                "                return (", replaced ,');',
                 "}}}}).apply(this)"
             ].join('');
+
+            return ret;
         }
     }
-};
+});
 
 Object.extend(HTML.Template, {
     ROOTElement: Class.create(HTML.Template.Element, {
