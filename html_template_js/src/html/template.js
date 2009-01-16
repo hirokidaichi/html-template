@@ -388,8 +388,24 @@ HTML.Template.Element.prototype = {
             '>'
         ].join('');
     },
+    // HTML::Template::Pro shigeki morimoto's extension
+    pathLike: function(attribute , matched){
+        var pos = (matched == '/')?'0':'_CONTEXT.length -'+(matched.split('..').length-1);
+        return  [
+            "((_CONTEXT["+pos+"]['"        , 
+            attribute ,
+            "']) ? _CONTEXT["+pos+"]['"    ,
+            attribute , 
+            "'] : undefined )"
+        ].join('');
+
+    },
     getParam: function() {
         if (this.attributes['name']) {
+            var matched = this.attributes['name'].match(/^(\/|(?:\.\.\/)+)(\w+)/);
+            if(matched){
+                return this.pathLike(matched[2],matched[1]);
+            }
             return  [
                 "((_TOP_LEVEL['"        , 
                 this.attributes['name'] ,
@@ -420,9 +436,9 @@ Object.extend(HTML.Template, {
             } else {
                 return [
                     'var _RETURN_VALUE    = [];',
-                    'var _GLOBAL_PARAM    = this._param;',
+                    'var _CONTEXT         = [this._param];',
                     'var _GLOBAL_FUNCTION = HTML.Template.GLOBAL_FUNC;',
-                    'var _TOP_LEVEL       = this._param;'
+                    'var _TOP_LEVEL       = this._param;',
                 ].join('');
             }
         }
@@ -432,11 +448,12 @@ Object.extend(HTML.Template, {
         type: 'loop',
         getCode: function() {
             if (this.isClose()) {
-                return '}.bind(this));'
+                return ['}.bind(this));','_CONTEXT.pop();'].join('');
             } else {
                 return [
                 'var _LOOP_LIST =$A(' + this.getParam() + ')|| $A([]);', 
-                'var _LOOP_LENGTH=_LOOP_LIST.length;',
+                'var _LOOP_LENGTH = _LOOP_LIST.length;',
+                '_CONTEXT.push(_TOP_LEVEL);',
                 '_LOOP_LIST.each(function(_TOP_LEVEL,i){',
                 '   _TOP_LEVEL = (typeof _TOP_LEVEL == "object")?_TOP_LEVEL: {};',
                 (HTML.Template.useLoopVariable)? [

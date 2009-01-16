@@ -1,3 +1,12 @@
+/* 2009 Daichi Hiroki <hirokidaichi@gmail.com>
+ * neverfield.js is freely distributable under the terms of MIT-style license.
+ * ( latest infomation :http://htmltemplatejs.googlecode.com or http://www.yabooo.org )
+ * This library requires the JavaScript Framework "Prototype" (version 1.6 or later).
+ * For details, see http://prototype.conio.net/
+/*-----------------------------------------------------------------------*/
+/*
+    Framework Core
+*/
 (function() {
     return new (Class.create({
         initialize:function(){
@@ -25,6 +34,9 @@
         }
     }));
 })()
+/*
+    
+*/
 .appendPlugin('scriptQuery',function(topLevel){
     function export_queryParams(){
         var src = $A(document.getElementsByTagName('script')).last().src;
@@ -37,6 +49,10 @@
         QUERY_PARAMS:export_queryParams()
     });
 })
+/*
+
+
+*/
 .appendPlugin('applicationInfo',function(topLevel){
     var meta  = $$('meta[name^="APPLICATION_INFO"]')[0];
     var applicationInfo = ( meta )? meta.getAttribute('content').evalJSON():({});
@@ -50,6 +66,9 @@
         },applicationInfo)
     });
 })
+/*
+
+*/
 .appendPlugin('scriptLoad',function(topLevel){
     var INFO = topLevel.APPLICATION_INFO;
     var head = $$('head')[0];
@@ -68,6 +87,10 @@
         $A(INFO.REQUIRE).each(appendHeader);
     });
 })
+/*
+
+
+*/
 .appendModule('Model',function(topLevel){
     //必要なモデル定義の追加
     var INFO = topLevel.APPLICATION_INFO;
@@ -107,17 +130,17 @@
     MethodRegister.addPluginMethod = function(name,method){
         var obj;
         if(Object.isString(name) && Object.isFunction(method)){
-            var obj = $H((tmp ={},tmp[name] = method,tmp));
+            obj = $H((tmp ={},tmp[name] = method,tmp));
         }else{    var cache = {};
-            var obj = $H(name);
+            obj = $H(name);
         }
-        var v = {};
-        obj.each(function(elem){
+        var v = obj.inject({},function(v,elem){
             v[elem.key] = function(){
                 var returnValue = elem.value.apply(this,$A(arguments))
                 if(returnValue) this.beforeReturnValue[elem.key] = returnValue ;
                 return this;
             };
+            return v;
         });
         MethodRegister.addMethods(v); 
     }
@@ -190,8 +213,11 @@
         register :MethodRegister,
         addPlugin:MethodRegister.addPluginMethod
     });
-
 })
+/*
+
+
+*/
 .appendModule('Namespace',function(topLevel){
     var INFO    = topLevel.APPLICATION_INFO;
     var MESSAGE ={
@@ -369,6 +395,9 @@
         }
     };
 })
+/*
+
+*/
 .appendModule('View',function(topLevel){
     var _self = this;
 
@@ -503,9 +532,21 @@
     });
     
 })
+/*
+
+
+*/
+.appendModule('UIComponent',function(){
+
+
+})
+/*
+
+
+
+*/
 .appendModule('UIComponent',function(){
 
 
 });
-
 
