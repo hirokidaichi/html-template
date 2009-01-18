@@ -33,7 +33,8 @@ HTML.Template = Class.create({
     },
     _initUrl:function(source){
         this._source = 'contentUnload';
-        if(this.option['element'] && (Object.isElement(this.option['element']) || this.option['element'] === document )){            this.assignElement = this.option['element'];
+        if(this.option['element'] && (Object.isElement(this.option['element']) || this.option['element'] === document )){
+            this.assignElement = this.option['element'];
         }
         this.storedName = "url:"+source;
         if(this.isCompiled && this.assignElement ){
@@ -201,35 +202,40 @@ HTML.Template = Class.create({
         this.root  = HTML.Template.createElement('root', {
             closeTag: false
         });
+        var matcher = (/ESCAPE=|DEFAULT=/.test(source))?HTML.Template.CHUNK_REGEXP_ATTRIBUTE:HTML.Template.CHUNK_REGEXP;
         this._chunks.push(this.root);
+ 
         while (source.length > 0) {
-            var results = source.match(HTML.Template.CHUNK_REGEXP());
+            var results = matcher(source);
+            //最後までマッチしなかった
             if (!results) {
                 this._chunks.push(HTML.Template.createElement('text', source));
                 source = '';
                 break;
             }
             var index = 0;
-            if ((index = source.indexOf(results[0])) > 0) {
+            if ((index = source.indexOf(results.fullText)) > 0) {
                 var text = source.slice(0, index);
                 this._chunks.push(HTML.Template.createElement('text', text));
                 source = source.slice(index);
             };
             var attr,name,value;
-            if (results[3]) {
-                name  = results[3].toLowerCase();
-                value = [results[4], results[5], results[6]].join('');
+            if ( results.attribute_name ) {
+                name  = results.attribute_name.toLowerCase();
+                value = results.attribute_value;
                 attr  = {};
-                attr[name] = value;
+                attr[name]      = value;
+                attr['default'] = results['default'];
+                attr['escape']  = results['escape'];
             } else {
                 attr = undefined;
             }
-            this._chunks.push(HTML.Template.createElement(results[2], {
+            this._chunks.push(HTML.Template.createElement(results.tag_name, {
                 'attributes': attr,
-                'closeTag'  : results[1],
+                'closeTag'  : results.close,
                 'parent'    : this
             }));
-            source = source.slice(results[0].length);
+            source = source.slice(results.fullText.length);
         };
         this._chunks.push(HTML.Template.createElement('root', {
             closeTag: true
@@ -284,52 +290,147 @@ HTML.Template = Class.create({
         return this.output();
     }
 });
+
+HTML.Template.createMatcher = function(escapeChar,expArray){
+    function _escape( regText){
+        return (regText + '').replace(new RegExp(escapeChar,'g'), "\\");
+    }
+    var regValues = $A(expArray).inject({mapping:['fullText'],text:[]},function(val,e,i){
+        if(Object.isString(e)){
+            val.text.push(e);
+        }else{
+            val.mapping.push(e.map);
+        }
+        return val;
+    });
+    var reg = undefined;
+    regValues.text = _escape(regValues.text.join(''));
+    return function(matchingText){
+        if(!reg){
+            reg = new RegExp(regValues.text);
+        }
+        var results = (matchingText || '').match(reg);
+        if(results){
+            return  regValues.mapping.inject({},function(ret,v,i){
+                if(!ret[v])ret[v] = results[i];
+                return ret;
+            });
+        }else{
+            return undefined;
+        }
+    }
+
+};
+
 Object.extend(HTML.Template,{
     VERSION           : '0.5',
     DEFAULT_SELECTOR  : '.HTML_TEMPLATE',
     DEFERRED_SELECTOR : '.HTML_TEMPLATE_DEFERRED',
-    CHUNK_REGEXP:(function(escapeChar,expArray){
-        function _escape( regText){
-            return (regText + '').replace(new RegExp(escapeChar,'g'), "\\");
-        }
-        var regText = $A(expArray).map(function(e){
-            return _escape(e);
-        }).join('');
-        var reg = undefined;
-
-        return function(){
-            if(!reg){
-                reg = new RegExp(regText);
-            }
-            return reg;
-        }
-    })('%',[
-        "<",                                       //     start
-        "(%/)?",                                   // $1  closetag
-        "TMPL_",                                   //     prefix
-        "(VAR|LOOP|IF|ELSE|ELSIF|UNLESS|INCLUDE)", // $2  tagname suffix
-        "%s*",                                     //
-        "(?:",                                     // 
-            "(NAME|EXPR)=",                        // $3  attribute name
-            "(?:",                                 //
-                "'([^'>]*)'|",                     // $4  single quote value
-                '"([^">]*)"|',                     // $5  double quote value
-                "([^%s=>]*)",                      // $6  noquote value
-            ")",                                   //
-        ")?",                                      //
-        "%s*",                                     //
-        "((?:",                                    // $7 plugin attribute
-            "(?:%w)+=",                            // 
-            "(?:",                                 // 
-                "'(?:[^'>]*)'|",                   // 
-                '"(?:[^">]*)"|',                   // 
-                "(?:[^%s=>]*)",                    // 
-             ")",                                  //
-             "%s*",                                //
-        ")*)",                                     //
-        "%s*>"                                     //
+    CHUNK_REGEXP:HTML.Template.createMatcher('%',[
+        "<",
+        "(%/)?",{map:'close'},
+        "TMPL_",
+        "(VAR|LOOP|IF|ELSE|ELSIF|UNLESS|INCLUDE)",{map:'tag_name'},
+        "%s*",
+        /*
+            NAME or EXPR
+        */
+        "(?:",
+            "(NAME|EXPR)=",{map:'attribute_name'},
+            "(?:",
+                "'([^'>]*)'|",{map:'attribute_value'},
+                '"([^">]*)"|',{map:'attribute_value'},
+                "([^%s=>]*)" ,{map:'attribute_value'},
+            ")", 
+        ")?",
+        "%s*",
+        ">"
     ]),
-    GLOBAL_FUNC     :{},
+    CHUNK_REGEXP_ATTRIBUTE:HTML.Template.createMatcher('%',[
+        "<",
+        "(%/)?",{map:'close'},
+        "TMPL_",
+        "(VAR|LOOP|IF|ELSE|ELSIF|UNLESS|INCLUDE)",{map:'tag_name'},
+        "%s*",
+
+        "(?:",
+            "(?:DEFAULT)=",
+            "(?:",
+                "'([^'>]*)'|",{map:'default'},
+                '"([^">]*)"|',{map:'default'},
+                "([^%s=>]*)" ,{map:'default'},
+            ")", 
+        ")?",
+        "%s*",
+        "(?:",
+            "(?:ESCAPE)=",
+            "(?:",
+                "(JS|URL|HTML)",{map:'escape'},
+            ")", 
+        ")?",
+        "%s*",
+        "(?:",
+            "(?:DEFAULT)=",
+            "(?:",
+                "'([^'>]*)'|",{map:'default'},
+                '"([^">]*)"|',{map:'default'},
+                "([^%s=>]*)" ,{map:'default'},
+            ")",
+        ")?",
+        "%s*",
+        /*
+            NAME or EXPR
+        */
+        "(?:",
+            "(NAME|EXPR)=",{map:'attribute_name'},
+            "(?:",
+                "'([^'>]*)'|",{map:'attribute_value'},
+                '"([^">]*)"|',{map:'attribute_value'},
+                "([^%s=>]*)" ,{map:'attribute_value'},
+            ")", 
+        ")?",
+        /*
+            DEFAULT or ESCAPE
+        */
+        '%s*',
+        "(?:",
+            "(?:DEFAULT)=",
+            "(?:",
+                "'([^'>]*)'|",{map:'default'},
+                '"([^">]*)"|',{map:'default'},
+                "([^%s=>]*)" ,{map:'default'},
+            ")", 
+        ")?",
+        "%s*",
+        "(?:",
+            "(?:ESCAPE)=",
+            "(?:",
+                "(JS|URL|HTML)",{map:'escape'},
+            ")", 
+        ")?",
+        "%s*",
+        "(?:",
+            "(?:DEFAULT)=",
+            "(?:",
+                "'([^'>]*)'|",{map:'default'},
+                '"([^">]*)"|',{map:'default'},
+                "([^%s=>]*)" ,{map:'default'},
+            ")",
+        ")?",
+        "%s*",
+        ">"
+    ]),
+    GLOBAL_FUNC     :{
+        __escapeHTML:function(str){
+            return str.escapeHTML();
+        },
+        __escapeJS:function(str){
+            return Object.toJSON(str);
+        },
+        __escapeURL:function(str){
+            return encodeURI(str);
+        }
+    },
     Cache           :{},
     useLoopVariable :true  ,// Loop中の__index__などを使用する/しない
     usePrerender    :true  ,// DocumentFragmentとしてDOMオブジェクトを事前作成しておく
@@ -383,9 +484,7 @@ HTML.Template.Element = Class.create({
         if (this.type == 'text') {
             this.value = option;
         } else {
-            $H(option).each(function(e) {
-                this[e[0]] = e[1];
-            }.bind(this));
+            Object.extend(this,option);
         }
     },
     isParent : Prototype.emptyFunction,
@@ -426,28 +525,41 @@ HTML.Template.Element = Class.create({
 
     },
     getParam: function() {
+        var ret = "";
         if (this.attributes['name']) {
             var matched = this.attributes['name'].match(/^(\/|(?:\.\.\/)+)(\w+)/);
             if(matched){
                 return this._pathLike(matched[2],matched[1]);
             }
-            return  [
+            ret =  [
                 "((_TOP_LEVEL['"            , 
                     this.attributes['name'] ,
                 "']) ? _TOP_LEVEL['"        ,
                     this.attributes['name'] , 
-                "'] : undefined )"
+                "'] : ",
+                    Object.toJSON(this.attributes['default'])  || 'undefined',
+                " )"
             ].join('');
         }
         if (this.attributes['expr']) {
+            var operators = {
+                'gt' :'>',
+                'lt' :'<',
+                'eq' :'==',
+                'ne' :'!=',
+                'ge' :'>=',
+                'le' :'<='
+            };
             var replaced = this.attributes['expr'].replace(/{(\/|(?:\.\.\/)+)(\w+)}/g,function(full,matched,param){
                 return [
                      '_CONTEXT[',
                      (matched == '/')?'0':'_CONTEXT.length -'+(matched.split('..').length-1),
                      ']["',param,'"]'
                 ].join('');
+            }).replace(/\s+(gt|lt|eq|ne|ge|le|cmp)\s+/g,function(full,match){
+                return " "+operators[match]+" ";
             });
-            var ret= [
+            ret = [
                 "(function(){",
                 "    with(_GLOBAL_FUNCTION){",
                 "        with(this._funcs){",
@@ -455,9 +567,15 @@ HTML.Template.Element = Class.create({
                 "                return (", replaced ,');',
                 "}}}}).apply(this)"
             ].join('');
-
-            return ret;
         }
+        if(this.attributes['escape']){
+            ret = [
+                '_GLOBAL_FUNCTION.__escape'+this.attributes['escape']+'(',
+                ret,
+                ')'
+            ].join('');
+        }
+        return ret;
     }
 });
 
@@ -564,7 +682,9 @@ Object.extend(HTML.Template, {
             if (this.isClose()) {
                 throw(new Error('HTML.Template ParseError'));
             } else {
-                return '_RETURN_VALUE.push(' + Object.toJSON(this.value) + ');';
+                if(!HTML.Template.TEXTElement._stringList){HTML.Template.TEXTElement._stringList=[];}
+                HTML.Template.TEXTElement._stringList.push(this.value);
+                return '_RETURN_VALUE.push(HTML.Template.TEXTElement._stringList['+(HTML.Template.TEXTElement._stringList.length-1)+']);';
             }
         }
     })

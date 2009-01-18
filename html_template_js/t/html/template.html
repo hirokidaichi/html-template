@@ -59,7 +59,7 @@ Case-1<div>xx</div>
 <p></p>
 </div>
 </div>
-
+<input type=button onclick="new HTML.Template(COMPLEX_TMPL+'heklo')">
 <div id="test01_tmpl" class="HTML_TEMPLATE"><!--<TMPL_LOOP NAME="loop"><TMPL_VAR NAME="test"></TMPL_LOOP>*--></div>
 <div id="test02_tmpl" class="HTML_TEMPLATE"><!--hello<TMPL_LOOP NAME='outer'><TMPL_INCLUDE NAME='dom:test01_tmpl'></TMPL_LOOP>hello--></div>
 <div id="test03_tmpl" ><!--<TMPL_LOOP NAME="loop"><TMPL_VAR NAME="test"></TMPL_LOOP>*--></div>
@@ -67,6 +67,32 @@ Case-1<div>xx</div>
 </body>
 <script language="javascript" type="text/javascript">
 <!--
+(function(){
+    var Aspect = {
+        weave:function(dst,src){
+            $H(src).each(function(e){
+                var key = e[0],value = e[1];
+                if( Object.isFunction(value) && 
+                    Object.isFunction(dst[key]) ){
+                    dst[key]=dst[key].wrap(value);
+                }
+            });
+        }
+    };
+    var logger = function(name,proceed){
+        var args = $A(arguments);
+        args.shift();args.shift();
+        console.log(args);
+        var ret=proceed.apply(this,args);
+        console.log(name+':'+this.storedName+":"+ret);
+        return ret;
+    };
+    Aspect.weave(HTML.Template.prototype,{
+        // 出力結果を見たい関数を記述
+        output:logger.curry('output'),
+        param:logger.curry('param')
+    });
+})();
 
 
 var COMPLEX_TMPL =[
@@ -90,6 +116,7 @@ var COMPLEX_TMPL =[
     '<img src="../../resources/test.jpg">',
     '</p>'
 ].join('\n');
+
 document.observe('dom:loaded',function(){
 
 new Test.Unit.Runner({
@@ -193,9 +220,32 @@ new Test.Unit.Runner({
     testURL:function(){with(this){
         
         document.observe('htmltemplate:compiled',function(evt){
-            console.log('htmltemplate_compiled:'+this.storedName);
-        }.bind(new HTML.Template('url:/html_template_js/tmpl/test.tmpl')));
+            //console.log('htmltemplate_compiled:'+this.storedName);
+        }.bind(new HTML.Template('url:../../tmpl/test.tmpl')));
 
+    }},
+    testDEFAULT:function(){with(this){
+        var tmpl=new HTML.Template('<TMPL_VAR NAME="aaa" DEFAULT="a">');
+        assertEqual('a',tmpl.output());
+        var tmplB=new HTML.Template('<TMPL_VAR  DEFAULT="a" NAME="aaa">');
+        assertEqual('a',tmplB.output());
+    }},
+    testESCAPE:function(){with(this){
+        var tmpl=new HTML.Template('<TMPL_VAR NAME="aaa" ESCAPE=HTML>');
+        tmpl.param({
+        	aaa:"<div>hoge</div>"
+        });
+        assertEqual('&lt;div&gt;hoge&lt;/div&gt;',tmpl.output());
+        var tmpl=new HTML.Template('<TMPL_VAR NAME="aaa" ESCAPE=JS>');
+        tmpl.param({
+        	aaa:"aaa\n\n"
+        });
+        assertEqual('"aaa\\n\\n"',tmpl.output());
+        var tmpl=new HTML.Template('<TMPL_VAR NAME="aaa" ESCAPE=URL>');
+        tmpl.param({
+        	aaa:"http://www.js/ ほげ"
+        });
+        assertEqual('http://www.js/%20%E3%81%BB%E3%81%92',tmpl.output());
     }},
     testEXPR:function(){with(this){
         var x = new HTML.Template({type:'text',source:'<TMPL_VAR EXPR="func(test)">'});
@@ -219,12 +269,12 @@ new Test.Unit.Runner({
         });
         assertEqual(x.output(),'iiiiiiiiii');
         
-        var y = new HTML.Template({type:'text',source:'<TMPL_IF EXPR="func(test)">i<TMPL_ELSIF EXPR="test">love</TMPL_IF>'});
-        y.registerFunction('func',function(t){return !t;});
-        y.param({
-            test:false
-        });
-        assertEqual(y.output(),'i');
+var y = new HTML.Template({type:'text',source:'<TMPL_IF EXPR="func(test)">i<TMPL_ELSIF EXPR="test">love</TMPL_IF>'});
+y.registerFunction('func',function(t){return !t;});
+y.param({
+    test:false
+});
+assertEqual(y.output(),'i');
         
         y.param({
             test:true
@@ -267,53 +317,54 @@ new Test.Unit.Runner({
         });
         assertEqual(test03.output(),'123*');
         
-        var test04 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR NAME="a"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
-        test04.param({
-            aaa :[
-                {bbb:[
-                    {ccc:[
-                        {a:'hoge'}
-                    ]}
-                ]}
-            ]
-        });
-        assertEqual('hoge',test04.output());
-        var test05 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR NAME="/a"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
-        test05.param({
-            aaa :[
-                {bbb:[
-                    {ccc:[
-                        {a:'hoge'}
-                    ]}
-                ]}
-            ],
-            a :'huga'
-        });
-        assertEqual('huga',test05.output());
-        var test06 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR NAME="../a"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
-        test06.param({
-            aaa :[
-                {bbb:[
-                    {ccc:[
-                        {a:'hoge'}
-                    ],a:'piyo'}
-                ],a:'moga'}
-            ],
-            a :'huga'
-        });
-        assertEqual('piyo',test06.output());
-        var test07 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR NAME="../../a"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
-        test07.param({
-            aaa :[
-                {bbb:[
-                    {ccc:[
-                        {a:'hoge'}
-                    ],a:'piyo'}
-                ],a:'moga'}
-            ],
-            a :'huga'
-        });
-        assertEqual('moga',test07.output());
+var test04 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR NAME="a"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
+test04.param({
+    aaa :[
+        {bbb:[
+            {ccc:[
+                {a:'hoge'}
+            ]}
+        ]}
+    ]
+});
+assertEqual('hoge',test04.output());
+var test05 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR NAME="/a"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
+test05.param({
+    aaa :[
+        {bbb:[
+            {ccc:[
+                {a:'hoge'}
+            ]}
+        ]}
+    ],
+    a :'huga'
+});
+assertEqual('huga',test05.output());
+var test06 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR NAME="../a"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
+test06.param({
+    aaa :[
+        {bbb:[
+            {ccc:[
+                {a:'hoge'}
+            ],a:'piyo'}
+        ],a:'moga'}
+    ],
+    a :'huga'
+});
+assertEqual('piyo',test06.output());
+var test07 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR NAME="../../a"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
+test07.param({
+    aaa :[
+        {bbb:[
+            {ccc:[
+                {a:'hoge'}
+            ],a:'piyo'}
+        ],a:'moga'}
+    ],
+    a :'huga'
+});
+assertEqual('moga',test07.output());
+        
     }},
     testEXEXPR:function(){with(this){
         var test04 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR EXPR="a"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
@@ -327,41 +378,41 @@ new Test.Unit.Runner({
             ]
         });
         assertEqual('hoge',test04.output());
-        var test05 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR EXPR="{/a}"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
-        test05.param({
-            aaa :[
-                {bbb:[
-                    {ccc:[
-                        {a:'hoge'}
-                    ]}
-                ]}
-            ],
-            a :'huga'
-        });
-        assertEqual('huga',test05.output());
-        var test06 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR EXPR="{../a}"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
-        test06.param({
-            aaa :[
-                {bbb:[
-                    {ccc:[
-                        {a:'hoge'}
-                    ],a:'piyo'}
-                ],a:'moga'}
-            ],
-            a :'huga'
-        });
-        assertEqual('piyo',test06.output());
-        var test07 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR EXPR="{../../a}"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
-        test07.param({
-            aaa :[
-                {bbb:[
-                    {ccc:[
-                        {a:'hoge'}
-                    ],a:'piyo'}
-                ],a:'moga'}
-            ],
-            a :'huga'
-        });
+var test05 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR EXPR="{/a}"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
+test05.param({
+    aaa :[
+        {bbb:[
+            {ccc:[
+                {a:'hoge'}
+            ]}
+        ]}
+    ],
+    a :'huga'
+});
+assertEqual('huga',test05.output());
+var test06 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR EXPR="{../a}"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
+test06.param({
+    aaa :[
+        {bbb:[
+            {ccc:[
+                {a:'hoge'}
+            ],a:'piyo'}
+        ],a:'moga'}
+    ],
+    a :'huga'
+});
+assertEqual('piyo',test06.output());
+var test07 = new HTML.Template('<TMPL_LOOP NAME=aaa><TMPL_LOOP NAME=bbb><TMPL_LOOP NAME=ccc><TMPL_VAR EXPR="{../../a}"></TMPL_LOOP></TMPL_LOOP></TMPL_LOOP>');
+test07.param({
+    aaa :[
+        {bbb:[
+            {ccc:[
+                {a:'hoge'}
+            ],a:'piyo'}
+        ],a:'moga'}
+    ],
+    a :'huga'
+});
         assertEqual('moga',test07.output());
 
     }},
@@ -385,7 +436,7 @@ new Test.Unit.Runner({
         benchmark(function(){
             new HTML.Template({type:'text',source:COMPLEX_TMPL+Math.random()});
         },100);
-    }},
+    }}/*,
     testBenchOutput:function(){with(this){
         var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
         tmpl.param({
@@ -495,7 +546,7 @@ new Test.Unit.Runner({
             });
             tmpl.output();
         },1000);
-    }}
+    }}*/
 
 });
 });
