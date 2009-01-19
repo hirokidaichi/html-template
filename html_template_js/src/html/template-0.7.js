@@ -240,7 +240,7 @@ HTML.Template = Class.create({
         this._chunks.push(HTML.Template.createElement('root', {
             closeTag: true
         }));
-        this._functionText  = this._chunks.map(function(e){return e.getCode()}).join('\n');
+        this._functionText  = this._chunks.map(function(e){return e.getCode()});
         this.isParsed       = true;
         return this;
     },
@@ -250,7 +250,10 @@ HTML.Template = Class.create({
             if (HTML.Template.Cache[uniq]) {
                 this._output = HTML.Template.Cache[uniq];
             } else {
-                var functionBody = this.parse()._functionText;
+                this.parse();
+                var functionBody = this._chunks.map(function(e) {
+                    return e.getCode();
+                }).join('');
                 try{
                     this._output = Function(functionBody);
                 }catch(e){
@@ -320,7 +323,7 @@ HTML.Template.createMatcher = function(escapeChar,expArray){
 };
 
 Object.extend(HTML.Template,{
-    VERSION           : '0.8',
+    VERSION           : '0.7',
     DEFAULT_SELECTOR  : '.HTML_TEMPLATE',
     DEFERRED_SELECTOR : '.HTML_TEMPLATE_DEFERRED',
     CHUNK_REGEXP:HTML.Template.createMatcher('%',[
@@ -511,11 +514,11 @@ HTML.Template.Element = Class.create({
     },
     // HTML::Template::Pro shigeki morimoto's extension
     _pathLike: function(attribute , matched){
-        var pos = (matched == '/')?'0':'$_C.length -'+(matched.split('..').length-1);
+        var pos = (matched == '/')?'0':'_CONTEXT.length -'+(matched.split('..').length-1);
         return  [
-            "(($_C["+pos+"]['"        , 
+            "((_CONTEXT["+pos+"]['"        , 
             attribute ,
-            "']) ? $_C["+pos+"]['"    ,
+            "']) ? _CONTEXT["+pos+"]['"    ,
             attribute , 
             "'] : undefined )"
         ].join('');
@@ -529,9 +532,9 @@ HTML.Template.Element = Class.create({
                 return this._pathLike(matched[2],matched[1]);
             }
             ret =  [
-                "(($_T['"            , 
+                "((_TOP_LEVEL['"            , 
                     this.attributes['name'] ,
-                "']) ? $_T['"        ,
+                "']) ? _TOP_LEVEL['"        ,
                     this.attributes['name'] , 
                 "'] : ",
                     Object.toJSON(this.attributes['default'])  || 'undefined',
@@ -549,8 +552,8 @@ HTML.Template.Element = Class.create({
             };
             var replaced = this.attributes['expr'].replace(/{(\/|(?:\.\.\/)+)(\w+)}/g,function(full,matched,param){
                 return [
-                     '$_C[',
-                     (matched == '/')?'0':'$_C.length -'+(matched.split('..').length-1),
+                     '_CONTEXT[',
+                     (matched == '/')?'0':'_CONTEXT.length -'+(matched.split('..').length-1),
                      ']["',param,'"]'
                 ].join('');
             }).replace(/\s+(gt|lt|eq|ne|ge|le|cmp)\s+/g,function(full,match){
@@ -558,16 +561,16 @@ HTML.Template.Element = Class.create({
             });
             ret = [
                 "(function(){",
-                "    with($_GF){",
-                "        with($_SELF._funcs){",
-                "            with($_T){",
+                "    with(_GLOBAL_FUNCTION){",
+                "        with(this._funcs){",
+                "            with(_TOP_LEVEL){",
                 "                return (", replaced ,');',
-                "}}}}).apply($_SELF)"
+                "}}}}).apply(this)"
             ].join('');
         }
         if(this.attributes['escape']){
             ret = [
-                '$_GF.__escape'+this.attributes['escape']+'(',
+                '_GLOBAL_FUNCTION.__escape'+this.attributes['escape']+'(',
                 ret,
                 ')'
             ].join('');
@@ -581,15 +584,13 @@ Object.extend(HTML.Template, {
         type: 'root',
         getCode: function() {
             if (this.isClose()) {
-                return 'return $_R.join("");'
+                return 'return _RETURN_VALUE.join("");'
             } else {
                 return [
-                    'var $_R  = [];',
-                    'var $_C  = [this._param];',
-                    'var $_GF = HTML.Template.GLOBAL_FUNC;',
-                    'var $_T  = this._param;',
-                    'var $_S  = HTML.Template.TEXTElement._stringList;',
-                    'var $_SELF = this;'
+                    'var _RETURN_VALUE    = [];',
+                    'var _CONTEXT         = [this._param];',
+                    'var _GLOBAL_FUNCTION = HTML.Template.GLOBAL_FUNC;',
+                    'var _TOP_LEVEL       = this._param;',
                 ].join('');
             }
         }
@@ -597,31 +598,22 @@ Object.extend(HTML.Template, {
 
     LOOPElement: Class.create(HTML.Template.Element, {
         type: 'loop',
-        initialize:function($super,option){
-            if(!this.constructor.instanceId){
-                this.constructor.instanceId = 0;
-            }
-            this._ID = this.constructor.instanceId++;
-            $super(option);
-        },
         getCode: function() {
             if (this.isClose()) {
-                return ['}','$_T = $_C.pop();'].join('');
+                return ['}.bind(this));','_CONTEXT.pop();'].join('');
             } else {
-                var id = this._ID.toString(16);
                 return [
-                'var $_L_'+id+' =$A(' + this.getParam() + ')|| [];', 
-                'var $_LL_'+id+' = $_L_'+id+'.length;',
-                '$_C.push($_T);',
-                'for(var i_'+id+'=0;i_'+id+'<$_LL_'+id+';i_'+id+'++){',
-                '   $_T = (typeof $_L_'+id+'[i_'+id+'] == "object")?',
-                '                $_L_'+id+'[i_'+id+'] : {};',
+                'var _LOOP_LIST =$A(' + this.getParam() + ')|| $A([]);', 
+                'var _LOOP_LENGTH = _LOOP_LIST.length;',
+                '_CONTEXT.push(_TOP_LEVEL);',
+                '_LOOP_LIST.each(function(_TOP_LEVEL,i){',
+                '   _TOP_LEVEL = (typeof _TOP_LEVEL == "object")?_TOP_LEVEL: {};',
                 (HTML.Template.useLoopVariable)? [
-                    "$_T['__first__'] = (i_"+id+" == 0) ? true: false;",
-                    "$_T['__index__'] = i_"+id+";",
-                    "$_T['__odd__']   = (i_"+id+" % 2) ? true: false;",
-                    "$_T['__last__']  = (i_"+id+" == ($_LL_"+id+" - 1)) ? true: false;",
-                    "$_T['__inner__'] = ($_T['__first__']||$_T['__last__'])?false:true;"
+                    "_TOP_LEVEL['__first__'] = (i == 0) ? true: false;",
+                    "_TOP_LEVEL['__index__'] = i;",
+                    "_TOP_LEVEL['__odd__']   = (i % 2) ? true: false;",
+                    "_TOP_LEVEL['__last__']  = (i == (_LOOP_LENGTH - 1)) ? true: false;",
+                    "_TOP_LEVEL['__inner__'] = (_TOP_LEVEL['__first__']||_TOP_LEVEL['__last__'])?false:true;"
                 ].join(''):'',
                 ].join('');
             }
@@ -634,7 +626,7 @@ Object.extend(HTML.Template, {
             if (this.isClose()) {
                 throw(new Error('HTML.Template ParseError'));
             } else {
-                return '$_R.push(' + this.getParam() + ');';
+                return '_RETURN_VALUE.push(' + this.getParam() + ');';
             }
         }
     }),
@@ -675,8 +667,8 @@ Object.extend(HTML.Template, {
                     'if(HTML.Template.Cache['+name+']){',
                     '   var _tmpl = new HTML.Template('+name+');',
                     '   _tmpl.registerFunction(this._funcs );',
-                    '   _tmpl.param($_T);',
-                    '   $_R.push(_tmpl.output());',
+                    '   _tmpl.param(_TOP_LEVEL);',
+                    '   _RETURN_VALUE.push(_tmpl.output());',
                     '}'
                 ].join('\n');
             }
@@ -692,7 +684,7 @@ Object.extend(HTML.Template, {
             } else {
                 if(!HTML.Template.TEXTElement._stringList){HTML.Template.TEXTElement._stringList=[];}
                 HTML.Template.TEXTElement._stringList.push(this.value);
-                return '$_R.push($_S['+(HTML.Template.TEXTElement._stringList.length-1)+']);';
+                return '_RETURN_VALUE.push(HTML.Template.TEXTElement._stringList['+(HTML.Template.TEXTElement._stringList.length-1)+']);';
             }
         }
     })
