@@ -199,24 +199,27 @@ HTML.Template = Class.create({
     },
     parse: function() {
         var source = this._source;
-        this.root  = HTML.Template.createElement('root', {
+        var chunks = [];
+        var createElement = HTML.Template.createElement
+        this.root  = createElement('ROOT', {
             closeTag: false
         });
         var matcher = (/ESCAPE=|DEFAULT=/.test(source))?HTML.Template.CHUNK_REGEXP_ATTRIBUTE:HTML.Template.CHUNK_REGEXP;
-        this._chunks.push(this.root);
+        chunks.push(this.root);
  
         while (source.length > 0) {
             var results = matcher(source);
             //最後までマッチしなかった
             if (!results) {
-                this._chunks.push(HTML.Template.createElement('text', source));
+                chunks.push(createElement('TEXT', source));
                 source = '';
                 break;
             }
             var index = 0;
-            if ((index = source.indexOf(results.fullText)) > 0) {
+            var fullText = results.fullText;
+            if ((index = source.indexOf(fullText)) > 0) {
                 var text = source.slice(0, index);
-                this._chunks.push(HTML.Template.createElement('text', text));
+                chunks.push(createElement('TEXT', text));
                 source = source.slice(index);
             };
             var attr,name,value;
@@ -230,18 +233,24 @@ HTML.Template = Class.create({
             } else {
                 attr = undefined;
             }
-            this._chunks.push(HTML.Template.createElement(results.tag_name, {
+            chunks.push(createElement(results.tag_name, {
                 'attributes': attr,
                 'closeTag'  : results.close,
                 'parent'    : this
             }));
-            source = source.slice(results.fullText.length);
+            source = source.slice(fullText.length);
         };
-        this._chunks.push(HTML.Template.createElement('root', {
+        chunks.push(createElement('ROOT', {
             closeTag: true
         }));
-        this._functionText  = this._chunks.map(function(e){return e.getCode()}).join('\n');
+        var l = chunks.length;
+        var i = 0;
+        var codes = [];
+        for(;i<l;i++){codes.push(chunks[i].getCode())};
+        //console.log(codes);
+        this._functionText  = codes.join('\n');
         this.isParsed       = true;
+        this._chunks        = chunks;
         return this;
     },
     compile: function() {
@@ -292,26 +301,42 @@ HTML.Template.createMatcher = function(escapeChar,expArray){
     function _escape( regText){
         return (regText + '').replace(new RegExp(escapeChar,'g'), "\\");
     }
-    var regValues = $A(expArray).inject({mapping:['fullText'],text:[]},function(val,e,i){
+    var count = 0;
+    var regValues = $A(expArray).inject({mapping:{'fullText':[0]},text:[]},function(val,e,i){
         if(Object.isString(e)){
             val.text.push(e);
         }else{
-            val.mapping.push(e.map);
+            //val.mapping.push(e.map);
+            if(!val.mapping[e.map]){
+                val.mapping[e.map] = [];
+            }
+            val.mapping[e.map].push(++count);
         }
         return val;
     });
     var reg = undefined;
     regValues.text = _escape(regValues.text.join(''));
-    return function(matchingText){
+
+    return function matcher(matchingText){
         if(!reg){
             reg = new RegExp(regValues.text);
         }
         var results = (matchingText || '').match(reg);
         if(results){
-            return  regValues.mapping.inject({},function(ret,v,i){
-                if(!ret[v])ret[v] = results[i];
-                return ret;
-            });
+            var ret = {};
+            var prop = 0,i = 0,map = regValues.mapping;
+            for(prop in map){
+                var list   = map[prop];
+                var length = list.length;
+                for(i = 0 ;i<length ;i++){
+                    if(results[list[i]]){
+                        ret[prop] = results[list[i]];
+                        break;
+                    }
+                }
+            }
+            return ret;
+
         }else{
             return undefined;
         }
@@ -460,7 +485,7 @@ Object.extend(HTML.Template,{
     },
 
     createElement : function(type, option) {
-        return new HTML.Template[type.toUpperCase() + 'Element'](option);
+        return new HTML.Template[type + 'Element'](option);
     },
     registerFunction : function(name, func) {
         HTML.Template.GLOBAL_FUNC[name] = func;
@@ -483,15 +508,12 @@ HTML.Template.Element = Class.create({
         } else {
             Object.extend(this,option);
         }
+        this['closeTag'] =(this['closeTag'])? true: false;
     },
     isParent : Prototype.emptyFunction,
     execute  : Prototype.emptyFunction,
     isClose  : function() {
         return this['closeTag'] ? true: false;
-    },
-    appendChild : function(child) {
-        if (!this.children) this.children = [];
-        this.children.push(child);
     },
     inspect: function() {
         return Object.toJSON(this);
@@ -502,7 +524,7 @@ HTML.Template.Element = Class.create({
     toString: function() {
         return [
             '<' ,
-            ((this.isClose()) ? '/': '') ,
+            ((this.closeTag) ? '/': '') ,
             this.type ,
             ((this.hasName) ? ' NAME=': '') ,
             ((this.name) ? this.name: '') ,
@@ -580,7 +602,7 @@ Object.extend(HTML.Template, {
     ROOTElement: Class.create(HTML.Template.Element, {
         type: 'root',
         getCode: function() {
-            if (this.isClose()) {
+            if (this.closeTag) {
                 return 'return $_R.join("");'
             } else {
                 return [
@@ -605,7 +627,7 @@ Object.extend(HTML.Template, {
             $super(option);
         },
         getCode: function() {
-            if (this.isClose()) {
+            if (this.closeTag) {
                 return ['}','$_T = $_C.pop();'].join('');
             } else {
                 var id = this._ID.toString(16);
@@ -631,7 +653,7 @@ Object.extend(HTML.Template, {
     VARElement: Class.create(HTML.Template.Element, {
         type: 'var',
         getCode: function() {
-            if (this.isClose()) {
+            if (this.closeTag) {
                 throw(new Error('HTML.Template ParseError'));
             } else {
                 return '$_R.push(' + this.getParam() + ');';
@@ -645,7 +667,7 @@ Object.extend(HTML.Template, {
             return "!!" + this.getParam(param);
         },
         getCode: function() {
-            if (this.isClose()) {
+            if (this.closeTag) {
                 return '}'
             } else {
                 return 'if(' + this.getCondition() + '){';
@@ -656,7 +678,7 @@ Object.extend(HTML.Template, {
     ELSEElement: Class.create(HTML.Template.Element, {
         type: 'else',
         getCode: function() {
-            if (this.isClose()) {
+            if (this.closeTag) {
                 throw(new Error('HTML.Template ParseError'));
             } else {
                 return '}else{';
@@ -667,7 +689,7 @@ Object.extend(HTML.Template, {
     INCLUDEElement: Class.create(HTML.Template.Element, {
         type: 'include',
         getCode: function() {
-            if (this.isClose()) {
+            if (this.closeTag) {
                 throw(new Error('HTML.Template ParseError'));
             } else {
                 var name = '"'+(this.attributes['name'])+'"';
@@ -687,7 +709,7 @@ Object.extend(HTML.Template, {
         type: 'text',
         closeTag: false,
         getCode: function() {
-            if (this.isClose()) {
+            if (this.closeTag) {
                 throw(new Error('HTML.Template ParseError'));
             } else {
                 if(!HTML.Template.TEXTElement._stringList){HTML.Template.TEXTElement._stringList=[];}
@@ -701,7 +723,7 @@ Object.extend(HTML.Template, {
 HTML.Template.ELSIFElement = Class.create(HTML.Template.IFElement, {
     type: 'elsif',
     getCode: function() {
-        if (this.isClose()) {
+        if (this.closeTag) {
             throw(new Error('HTML.Template ParseError'));
         } else {
             return '}else if(' + this.getCondition() + '){';
