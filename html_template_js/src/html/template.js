@@ -243,7 +243,7 @@ HTML.Template = Class.create({
         chunks.push(createElement('ROOT', {
             closeTag: true
         }));
-        var l = chunks.length;
+        var l = chunks.length;/
         var i = 0;
         var codes = [];
         for(;i<l;i++){codes.push(chunks[i].getCode())};
@@ -453,7 +453,9 @@ Object.extend(HTML.Template,{
             return encodeURI(str);
         }
     },
-    Cache           :{},
+    Cache           :{
+        STRING_FRAGMENT : []
+    },
     useLoopVariable :true  ,// Loop中の__index__などを使用する/しない
     usePrerender    :true  ,// DocumentFragmentとしてDOMオブジェクトを事前作成しておく
     ElementCache    :{},
@@ -462,7 +464,10 @@ Object.extend(HTML.Template,{
         ret.push('HTML.Template.Cache={');
         for (var prop in HTML.Template.Cache) {
             var value = HTML.Template.Cache[prop];
-            if (Object.isFunction(value)) ret.push("'" + prop + "':" + value.toString() + ',');
+            if (Object.isFunction(value)){ ret.push("'" + prop + "':" + value.toString() + ',');}
+            else{
+                ret.push("'" + prop + "':" + Object.toJSON(value) + ',');
+            }
         }
         ret.push('_fin_:undefined');
         ret.push('};');
@@ -610,7 +615,7 @@ Object.extend(HTML.Template, {
                     'var $_C  = [this._param];',
                     'var $_GF = HTML.Template.GLOBAL_FUNC;',
                     'var $_T  = this._param;',
-                    'var $_S  = HTML.Template.TEXTElement._stringList;',
+                    'var $_S  = HTML.Template.Cache.STRING_FRAGMENT;',
                     'var $_SELF = this;'
                 ].join('');
             }
@@ -712,9 +717,8 @@ Object.extend(HTML.Template, {
             if (this.closeTag) {
                 throw(new Error('HTML.Template ParseError'));
             } else {
-                if(!HTML.Template.TEXTElement._stringList){HTML.Template.TEXTElement._stringList=[];}
-                HTML.Template.TEXTElement._stringList.push(this.value);
-                return '$_R.push($_S['+(HTML.Template.TEXTElement._stringList.length-1)+']);';
+                HTML.Template.Cache.STRING_FRAGMENT.push(this.value);
+                return '$_R.push($_S['+(HTML.Template.Cache.STRING_FRAGMENT.length-1)+']);';
             }
         }
     })
@@ -753,5 +757,4 @@ document.observe('dom:loaded',function(){
     HTML.Template.precompileBySelector(HTML.Template.DEFAULT_SELECTOR);
     HTML.Template.precompileBySelector.defer(HTML.Template.DEFERED_SELECTOR);
 });
-
 
