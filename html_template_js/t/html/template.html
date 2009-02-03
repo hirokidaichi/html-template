@@ -421,6 +421,7 @@ new Test.Unit.Runner({
 
     }},
     testRender:function(){with(this){
+
         var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
         tmpl.param({
             name:"render",
@@ -436,11 +437,11 @@ new Test.Unit.Runner({
         $('field').insert(tmpl);
         $('field').replace(tmpl);
     }},
-    testBenchCompile:function(){with(this){
+    /*testBenchCompile:function(){with(this){
         benchmark(function(){
             new HTML.Template({type:'text',source:COMPLEX_TMPL+Math.random()});
         },100);
-    }},
+    }},*/
     testBenchOutput:function(){with(this){
         var tmpl = new HTML.Template({type:'text',source:COMPLEX_TMPL});
         tmpl.param({

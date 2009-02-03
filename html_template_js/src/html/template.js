@@ -243,11 +243,10 @@ HTML.Template = Class.create({
         chunks.push(createElement('ROOT', {
             closeTag: true
         }));
-        var l = chunks.length;/
+        var l = chunks.length;
         var i = 0;
         var codes = [];
         for(;i<l;i++){codes.push(chunks[i].getCode())};
-        //console.log(codes);
         this._functionText  = codes.join('\n');
         this.isParsed       = true;
         this._chunks        = chunks;
@@ -387,7 +386,7 @@ Object.extend(HTML.Template,{
         "(?:",
             "(?:ESCAPE)=",
             "(?:",
-                "(JS|URL|HTML)",{map:'escape'},
+                "(JS|URL|HTML|0|1|NONE)",{map:'escape'},
             ")", 
         ")?",
         "%s*",
@@ -427,7 +426,7 @@ Object.extend(HTML.Template,{
         "(?:",
             "(?:ESCAPE)=",
             "(?:",
-                "(JS|URL|HTML)",{map:'escape'},
+                "(JS|URL|HTML|0|1|NONE)",{map:'escape'},
             ")", 
         ")?",
         "%s*",
@@ -451,20 +450,28 @@ Object.extend(HTML.Template,{
         },
         __escapeURL:function(str){
             return encodeURI(str);
+        },
+        __escapeNONE:function(str){
+            return str;
         }
     },
     Cache           :{
         STRING_FRAGMENT : []
     },
-    useLoopVariable :true  ,// Loop中の__index__などを使用する/しない
+    useLoopVariable :true  ,// Loop中の__counter__などを使用する/しない
     usePrerender    :true  ,// DocumentFragmentとしてDOMオブジェクトを事前作成しておく
     ElementCache    :{},
-    watchCache:function() {
+    watchCache:function(min) {
         var ret = [];
+        var minimize = (min)?function(str){
+            return str.replace(/(\n|^\s+)/mg, '');
+
+        }:Prototype.K;
         ret.push('HTML.Template.Cache={');
         for (var prop in HTML.Template.Cache) {
             var value = HTML.Template.Cache[prop];
-            if (Object.isFunction(value)){ ret.push("'" + prop + "':" + value.toString() + ',');}
+            if (Object.isFunction(value)){ ret.push("'" + prop + "':" + minimize(value.toString()) + ',');}
+
             else{
                 ret.push("'" + prop + "':" + Object.toJSON(value) + ',');
             }
@@ -593,6 +600,13 @@ HTML.Template.Element = Class.create({
             ].join('');
         }
         if(this.attributes['escape']){
+            var escape = {
+                0   : 'NONE',
+                1   : 'HTML',
+                HTML: 'HTML',
+                JS  : 'JS',
+                URL : 'URL'
+            }[this.attributes['escape']];
             ret = [
                 '$_GF.__escape'+this.attributes['escape']+'(',
                 ret,
@@ -645,7 +659,7 @@ Object.extend(HTML.Template, {
                 '                $_L_'+id+'[i_'+id+'] : {};',
                 (HTML.Template.useLoopVariable)? [
                     "$_T['__first__'] = (i_"+id+" == 0) ? true: false;",
-                    "$_T['__index__'] = i_"+id+";",
+                    "$_T['__counter__'] = i_"+id+";",
                     "$_T['__odd__']   = (i_"+id+" % 2) ? true: false;",
                     "$_T['__last__']  = (i_"+id+" == ($_LL_"+id+" - 1)) ? true: false;",
                     "$_T['__inner__'] = ($_T['__first__']||$_T['__last__'])?false:true;"
@@ -755,6 +769,7 @@ if(HTML.Template.usePrerender){
 
 document.observe('dom:loaded',function(){
     HTML.Template.precompileBySelector(HTML.Template.DEFAULT_SELECTOR);
-    HTML.Template.precompileBySelector.defer(HTML.Template.DEFERED_SELECTOR);
+    HTML.Template.precompileBySelector.defer(HTML.Template.DEFERRED_SELECTOR);
+
 });
 
