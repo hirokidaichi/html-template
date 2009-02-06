@@ -146,7 +146,7 @@ HTML.Template = Class.create({
         }
     },
     _uniqHash: function() {
-        return "autocache:" + HTML.Template.hashFunction(this._source);
+        return "autocache:" + HTML.Template.hashFunction(this.getSource());
     },
     registerFunction: function(name, func) {
         this._funcs[name] = func;
@@ -179,6 +179,12 @@ HTML.Template = Class.create({
             }
         }
     },
+    getSource:function(){
+        return ( Object.isFunction(this.option.filter)?
+            this.option.filter:
+            Prototype.K
+        )(this._source);
+    },
     clearParams:function(){
         this._param = {};
     },
@@ -193,12 +199,18 @@ HTML.Template = Class.create({
         if (Object.isArray(obj)) {
             throw ('template.param not array');
         }
+        if (Object.isUndefined(obj)){
+            return $H(this._param).keys();
+        }
+        if (Object.isString(obj)){
+            return this._param[obj];
+        }
         for (var prop in obj) {
             this._param[prop] = obj[prop];
         }
     },
     parse: function() {
-        var source = this._source;
+        var source = this.getSource();
         var chunks = [];
         var createElement = HTML.Template.createElement
         this.root  = createElement('ROOT', {
@@ -280,8 +292,17 @@ HTML.Template = Class.create({
         }
         return false;
     },
+    /*
+     * type : loop,name
+     * 
+     * */
     query : function(type,arg) {
-        
+
+        return this._chunks.select(function(e){
+            
+        }).map(function(e){
+            
+        });
     },
     output: function() {
         if (this.checkCompiled()) {
@@ -767,7 +788,7 @@ if(HTML.Template.usePrerender){
     });
 }
 
-document.observe('dom:loaded',function(){
+if(Object.isFunction(document.observe))document.observe('dom:loaded',function(){
     HTML.Template.precompileBySelector(HTML.Template.DEFAULT_SELECTOR);
     HTML.Template.precompileBySelector.defer(HTML.Template.DEFERRED_SELECTOR);
 
