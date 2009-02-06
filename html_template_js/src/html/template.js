@@ -1,4 +1,6 @@
-
+/*
+ * @require ../event/wrapper.js
+ */
 if (!Prototype) throw ('HTML.Template require prototype.js');
 if (! 
     Prototype.Version
