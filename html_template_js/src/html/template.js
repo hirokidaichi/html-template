@@ -682,8 +682,8 @@ Object.extend(HTML.Template, {
                 '                $_L_'+id+'[i_'+id+'] : {};',
                 (HTML.Template.useLoopVariable)? [
                     "$_T['__first__'] = (i_"+id+" == 0) ? true: false;",
-                    "$_T['__counter__'] = i_"+id+";",
-                    "$_T['__odd__']   = (i_"+id+" % 2) ? true: false;",
+                    "$_T['__counter__'] = i_"+id+"+1;",
+                    "$_T['__odd__']   = ((i_"+id+"+1)% 2) ? true: false;",
                     "$_T['__last__']  = (i_"+id+" == ($_LL_"+id+" - 1)) ? true: false;",
                     "$_T['__inner__'] = ($_T['__first__']||$_T['__last__'])?false:true;"
                 ].join(''):'',
