@@ -396,7 +396,6 @@ Object.extend(HTML.Template,{
         "TMPL_",
         "(VAR|LOOP|IF|ELSE|ELSIF|UNLESS|INCLUDE)",{map:'tag_name'},
         "%s*",
-
         "(?:",
             "(?:DEFAULT)=",
             "(?:",
