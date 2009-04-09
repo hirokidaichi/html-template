@@ -109,7 +109,6 @@ if (Prototype.Browser.WebKit)(function() {
                     Event._observe(window,'load', storeCache);
                     return function() {
                         var time = (new Date).getTime();
-                        alert(Object.toJSON($H(cache).keys()));
                         $H(cache).each(function(e, i) {
                             e.value.name = time + "_" + i;
                         });
