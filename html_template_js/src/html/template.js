@@ -465,7 +465,7 @@ Object.extend(HTML.Template,{
     ]),
     GLOBAL_FUNC     :{
         __escapeHTML:function(str){
-            return str.escapeHTML();
+            return (''+str).escapeHTML();
         },
         __escapeJS:function(str){
             return Object.toJSON(str);
