@@ -2,7 +2,7 @@
  * @require ../event/wrapper.js
  */
 if (!Prototype) throw ('HTML.Template require prototype.js');
-if (! 
+if (!
     Prototype.Version
     .split('.')
     .zip([1,6,0])
@@ -17,16 +17,16 @@ HTML.Template = Class.create({
         if ( Object.isString(option) ){
             var pos = option.indexOf(':');
             if(pos > 0 && pos < 10 ){
-                return {type:'name',source:option}
+                return {type:'name',source:option};
             }else{
-                return {type:'text',source:option}
+                return {type:'text',source:option};
             }
         }
         else if ( Object.isFunction(option) ){
-            return {type:'function',source:option}
+            return {type:'function',source:option};
         }
         else if ( Object.isElement(option) ){
-            return {type:'element',source:option}
+            return {type:'element',source:option};
         }
         if (! (option['type'] && option['source'])) {
             throw ('option needs {type:~~,source:~~}');
@@ -60,14 +60,14 @@ HTML.Template = Class.create({
                 if(this.assignElement){
                     this.assignElement.fire('htmltemplate:failure',this);
                 }else{
-                    throw(new Error('can not load tmpl.'))
+                    throw(new Error('can not load tmpl.'));
                 }
             },
             onException: function() {
                 if(this.assignElement){
                     this.assignElement.fire('htmltemplate:invalid_tmpl',this);
                 }else{
-                    throw(new Error('invalid tmpl.'))
+                    throw(new Error('invalid tmpl.'));
                 }
             }
         });
@@ -78,7 +78,7 @@ HTML.Template = Class.create({
                            (source.toString)?
                                source.toString():
                                     '';
-        
+
         this.compile();
     },
     _initFunction:function( source ){
@@ -86,15 +86,15 @@ HTML.Template = Class.create({
             this._output = source;
             this.isCompiled = true;
         }else{
-            throw(new Error('in case type is function, source must be function object.'))
+            throw(new Error('in case type is function, source must be function object.'));
         }
     },
     _initElement:function( source ){
         var elem = $(source);
         if ( Object.isElement(elem) && !this.isCompiled) {
             var tmpl = $A(elem.childNodes)
-                .select(function(m){return (m.nodeType==8)})
-                 .map(function(m){return m.data}).join('');
+                .select(function(m){return (m.nodeType==8);})
+                .map(function(m){return m.data;}).join('');
             this.storedName = 'dom:'+elem.identify();
             this._source    = tmpl;
             this.compile();
@@ -131,7 +131,7 @@ HTML.Template = Class.create({
                 throw(new Error(' not in cache '));
             }
         })[segment[0]]();
-        
+
     },
     initialize: function(option) {
         this._param  = {};
@@ -163,7 +163,7 @@ HTML.Template = Class.create({
             _tmp.param(param);
             _tmp._funcs = functions;
             return _tmp.output();
-        }
+        };
     },
     render :function(targetNode,option){
         // experimental function
@@ -174,12 +174,13 @@ HTML.Template = Class.create({
             Element._getContentFromAnonymousElement(tagName,this.output()).each(function(e){
                 dfrag.appendChild(e);
             });
-            
+
             this.toElement = function(){
                 var tmp = dfrag.cloneNode(true);
                 return tmp;
-            }
+            };
         }
+        return null;
     },
     getSource:function(){
         return ( Object.isFunction(this.option.filter)?
@@ -210,17 +211,18 @@ HTML.Template = Class.create({
         for (var prop in obj) {
             this._param[prop] = obj[prop];
         }
+        return null;
     },
     parse: function() {
         var source = this.getSource();
         var chunks = [];
-        var createElement = HTML.Template.createElement
+        var createElement = HTML.Template.createElement;
         this.root  = createElement('ROOT', {
             closeTag: false
         });
         var matcher = (/ESCAPE=|DEFAULT=/.test(source))?HTML.Template.CHUNK_REGEXP_ATTRIBUTE:HTML.Template.CHUNK_REGEXP;
         chunks.push(this.root);
- 
+
         while (source.length > 0) {
             var results = matcher(source);
             //最後までマッチしなかった
@@ -260,7 +262,7 @@ HTML.Template = Class.create({
         var l = chunks.length;
         var i = 0;
         var codes = [];
-        for(;i<l;i++){codes.push(chunks[i].getCode())};
+        for(;i<l;i++){codes.push(chunks[i].getCode());};
         this._functionText  = codes.join('\n');
         this.isParsed       = true;
         this._chunks        = chunks;
@@ -296,20 +298,21 @@ HTML.Template = Class.create({
     },
     /*
      * type : loop,name
-     * 
+     *
      * */
     query : function(type,arg) {
 
         return this._chunks.select(function(e){
-            
+
         }).map(function(e){
-            
+
         });
     },
     output: function() {
         if (this.checkCompiled()) {
             return this._output();
         }
+        return null;
     },
     toString:function(){
         return this.output() || '__UNCOMPILED__';
@@ -362,7 +365,7 @@ HTML.Template.createMatcher = function(escapeChar,expArray){
         }else{
             return undefined;
         }
-    }
+    };
 
 };
 
@@ -385,7 +388,7 @@ Object.extend(HTML.Template,{
                 "'([^'>]*)'|",{map:'attribute_value'},
                 '"([^">]*)"|',{map:'attribute_value'},
                 "([^%s=>]*)" ,{map:'attribute_value'},
-            ")", 
+            ")",
         ")?",
         "%s*",
         ">"
@@ -402,14 +405,14 @@ Object.extend(HTML.Template,{
                 "'([^'>]*)'|",{map:'default'},
                 '"([^">]*)"|',{map:'default'},
                 "([^%s=>]*)" ,{map:'default'},
-            ")", 
+            ")",
         ")?",
         "%s*",
         "(?:",
             "(?:ESCAPE)=",
             "(?:",
                 "(JS|URL|HTML|0|1|NONE)",{map:'escape'},
-            ")", 
+            ")",
         ")?",
         "%s*",
         "(?:",
@@ -430,7 +433,7 @@ Object.extend(HTML.Template,{
                 "'([^'>]*)'|",{map:'attribute_value'},
                 '"([^">]*)"|',{map:'attribute_value'},
                 "([^%s=>]*)" ,{map:'attribute_value'},
-            ")", 
+            ")",
         ")?",
         /*
             DEFAULT or ESCAPE
@@ -442,14 +445,14 @@ Object.extend(HTML.Template,{
                 "'([^'>]*)'|",{map:'default'},
                 '"([^">]*)"|',{map:'default'},
                 "([^%s=>]*)" ,{map:'default'},
-            ")", 
+            ")",
         ")?",
         "%s*",
         "(?:",
             "(?:ESCAPE)=",
             "(?:",
                 "(JS|URL|HTML|0|1|NONE)",{map:'escape'},
-            ")", 
+            ")",
         ")?",
         "%s*",
         "(?:",
@@ -465,7 +468,7 @@ Object.extend(HTML.Template,{
     ]),
     GLOBAL_FUNC     :{
         __escapeHTML:function(str){
-            return (''+str).escapeHTML();
+            return str.toString().escapeHTML();
         },
         __escapeJS:function(str){
             return Object.toJSON(str);
@@ -569,10 +572,10 @@ HTML.Template.Element = Class.create({
     _pathLike: function(attribute , matched){
         var pos = (matched == '/')?'0':'$_C.length -'+(matched.split('..').length-1);
         return  [
-            "(($_C["+pos+"]['"        , 
+            "(($_C["+pos+"]['"        ,
             attribute ,
             "']) ? $_C["+pos+"]['"    ,
-            attribute , 
+            attribute ,
             "'] : undefined )"
         ].join('');
 
@@ -585,10 +588,10 @@ HTML.Template.Element = Class.create({
                 return this._pathLike(matched[2],matched[1]);
             }
             ret =  [
-                "(($_T['"            , 
+                "(($_T['"            ,
                     this.attributes['name'] ,
                 "']) ? $_T['"        ,
-                    this.attributes['name'] , 
+                    this.attributes['name'] ,
                 "'] : ",
                     Object.toJSON(this.attributes['default'])  || 'undefined',
                 " )"
@@ -644,7 +647,7 @@ Object.extend(HTML.Template, {
         type: 'root',
         getCode: function() {
             if (this.closeTag) {
-                return 'return $_R.join("");'
+                return 'return $_R.join("");';
             } else {
                 return [
                     'var $_R  = [];',
@@ -673,7 +676,7 @@ Object.extend(HTML.Template, {
             } else {
                 var id = this._ID.toString(16);
                 return [
-                'var $_L_'+id+' =$A(' + this.getParam() + ')|| [];', 
+                'var $_L_'+id+' =$A(' + this.getParam() + ')|| [];',
                 'var $_LL_'+id+' = $_L_'+id+'.length;',
                 '$_C.push($_T);',
                 'for(var i_'+id+'=0;i_'+id+'<$_LL_'+id+';i_'+id+'++){',
@@ -685,7 +688,7 @@ Object.extend(HTML.Template, {
                     "$_T['__odd__']   = ((i_"+id+"+1)% 2) ? true: false;",
                     "$_T['__last__']  = (i_"+id+" == ($_LL_"+id+" - 1)) ? true: false;",
                     "$_T['__inner__'] = ($_T['__first__']||$_T['__last__'])?false:true;"
-                ].join(''):'',
+                ].join(''):''
                 ].join('');
             }
         }
@@ -709,7 +712,7 @@ Object.extend(HTML.Template, {
         },
         getCode: function() {
             if (this.closeTag) {
-                return '}'
+                return '}';
             } else {
                 return 'if(' + this.getCondition() + '){';
             }
