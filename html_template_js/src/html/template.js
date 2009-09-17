@@ -626,6 +626,7 @@ HTML.Template.Element = Class.create({
         }
         if(this.attributes['escape']){
             var escape = {
+                NONE: 'NONE',
                 0   : 'NONE',
                 1   : 'HTML',
                 HTML: 'HTML',
@@ -633,7 +634,7 @@ HTML.Template.Element = Class.create({
                 URL : 'URL'
             }[this.attributes['escape']];
             ret = [
-                '$_GF.__escape'+this.attributes['escape']+'(',
+                '$_GF.__escape'+escape+'(',
                 ret,
                 ')'
             ].join('');
