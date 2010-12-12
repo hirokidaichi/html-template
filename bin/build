@@ -13,6 +13,5 @@ my $target = shift @ARGV;
 my $src = include($target);
 
 $src =~ s|^//include<(.*)>$|include($1)|mge;
-print $src;
-#use JavaScript::Minifier qw(minify);
-#print minify( input =>$src );
+use JavaScript::Minifier qw(minify);
+print minify( input =>$src );

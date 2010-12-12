@@ -264,7 +264,7 @@ element.Base = util.defineClass({
             ].join('');
         }
         if(this.attributes['escape']){
-            var escape = {
+            var _escape = {
                 NONE: 'NONE',
                 0   : 'NONE',
                 1   : 'HTML',
@@ -273,7 +273,7 @@ element.Base = util.defineClass({
                 URL : 'URL'
             }[this.attributes['escape']];
             ret = [
-                '$_F.__escape'+escape+'(',
+                '$_F.__escape'+_escape+'(',
                 ret,
                 ')'
             ].join('');
@@ -387,7 +387,7 @@ util.merge( element , {
             } else {
                 var name = '"'+(this.attributes['name'])+'"';
                 return [
-                    '$_R($_F.__include($_T,$_F));'
+                    '$_R.push($_F.__include(',name,',$_T,$_F));'
                 ].join('\n');
             }
         }
