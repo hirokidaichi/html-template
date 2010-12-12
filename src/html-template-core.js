@@ -32,7 +32,7 @@ util.listToArray = function(list){
     return Array.prototype.slice.call(list);
 };
 util.curry = function() {
-    var args = listToArray(arguments);
+    var args = util.listToArray(arguments);
     var f    = args.shift();
     return function() {
       return f.apply(this, args.concat(util.listToArray(arguments)));
@@ -62,21 +62,22 @@ util.createRegexMatcher = function(escapeChar,expArray){
         return (regText + '').replace(new RegExp(escapeChar,'g'), "\\");
     }
     var count = 0;
-    var regValues = expArray.reduce(function(val,e,i){
+    var e;
+    var regValues = { mapping : { 'fullText' : [0]},text:[]};
+    for( var i =0,l= expArray.length;i<l;i++){
+        e = expArray[i];
         if(util.isString(e)){
-            val.text.push(e);
-        }else{
-            //val.mapping.push(e.map);
-            if(!val.mapping[e.map]){
-                val.mapping[e.map] = [];
-            }
-            val.mapping[e.map].push(++count);
+            regValues.text.push(e);
+            continue;
         }
-        return val;
-    },{mapping:{'fullText':[0]},text:[]});
+        if(!regValues.mapping[e.map]){
+            regValues.mapping[e.map] = [];
+        }
+        regValues.mapping[e.map].push(++count);
+        
+    }
     var reg = undefined;
     regValues.text = _escape(regValues.text.join(''));
-
     return function matcher(matchingText){
         if(!reg){
             reg = new RegExp(regValues.text);
@@ -386,12 +387,7 @@ util.merge( element , {
             } else {
                 var name = '"'+(this.attributes['name'])+'"';
                 return [
-                    'if(HTML.Template.Cache['+name+']){',
-                    '   var _tmpl = new HTML.Template('+name+');',
-                    '   _tmpl.registerFunction(this._funcs );',
-                    '   _tmpl.param($_T);',
-                    '   $_R.push(_tmpl.output());',
-                    '}'
+                    '$_R($_F.__include($_T,$_F));'
                 ].join('\n');
             }
         }
@@ -446,7 +442,6 @@ var parseHTMLTemplate = function(source) {
 
     while (source.length > 0) {
         var results = matcher(source);
-        //最後までマッチしなかった
         if (!results) {
             chunks.push(createElement('TEXT', source));
             source = '';
@@ -483,15 +478,15 @@ var parseHTMLTemplate = function(source) {
     return chunks;
 };
 
-var exports = {};
-exports.getFunctionText = function(chunksOrSource){
+module.exports.getFunctionText = function(chunksOrSource){
     var chunks = util.isString(chunksOrSource) ? parseHTMLTemplate( chunksOrSource ) : chunksOrSource;
     var codes = [];
     for(var i=0,l=chunks.length;i<l;i++){codes.push(chunks[i].getCode());};
     return codes.join('\n');
 };
 
-exports.compileFunctionText = function(functionText){
+module.exports.compileFunctionText = function(functionText){
     return util.curry(new Function('cache','param','funcs',functionText),cache);
 };
+
 
