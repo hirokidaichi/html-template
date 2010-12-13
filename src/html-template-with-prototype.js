@@ -190,12 +190,8 @@ HTML.Template = Class.create({
             this.isCompiled = true;
             return;
         }
-        try{
-            var functionBody = HTML.Template.Core.getFunctionText( this._source );
-            this._output =  HTML.Template.Core.compileFunctionText( functionBody );
-        }catch(e){
-            throw( new Error("HTML_TEMPLATE_ERROR:"+uniq+" can't compile.") );
-        }
+        var functionBody = HTML.Template.Core.getFunctionText( this._source );
+        this._output =  HTML.Template.Core.compileFunctionText( functionBody );
         HTML.Template.Cache[uniq] = this._output;
         this.isCompiled = true;
     },
@@ -229,7 +225,6 @@ Object.extend(HTML.Template,{
             return str;
         },
         __include : function(name,param,func){
-            console.log(arguments);
             var tmpl = new HTML.Template(name);
             tmpl.param(param);
             tmpl.registerFunction(func);

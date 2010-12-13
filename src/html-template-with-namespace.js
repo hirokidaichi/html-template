@@ -195,6 +195,7 @@ HTML.Template = Class.create({
                 try{
                     this._output = Function(functionBody);
                 }catch(e){
+                    alert(e);
                     throw( new Error("HTML_TEMPLATE_ERROR:"+uniq+" can't compile.") );
                 }
                 HTML.Template.Cache[uniq] = this._output;
@@ -277,6 +278,10 @@ Object.extend(HTML.Template,{
     })()
 });
 
+if(Object.isFunction(document.observe))document.observe('dom:loaded',function(){
+    HTML.Template.precompileBySelector(HTML.Template.DEFAULT_SELECTOR);
+    HTML.Template.precompileBySelector.defer(HTML.Template.DEFERRED_SELECTOR);
+});
 
 
 

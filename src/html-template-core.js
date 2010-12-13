@@ -1,4 +1,4 @@
-
+//
 /* 2008 Daichi Hiroki <hirokidaichi@gmail.com>
  * html-template-core.js is freely distributable under the terms of MIT-style license.
  * ( latest infomation :https://github.com/hirokidaichi/html-template )
@@ -227,13 +227,14 @@ element.Base = util.defineClass({
             if(matched){
                 return this._pathLike(matched[2],matched[1]);
             }
+            var _default = ( this.attributes['default'] )? "'"+this.attributes['default']+"'":"undefined";
             ret =  [
                 "(($_T['"            ,
                     this.attributes['name'] ,
                 "']) ? $_T['"        ,
                     this.attributes['name'] ,
                 "'] : ",
-                    JSON.stringify(this.attributes['default'])  || 'undefined',
+                    _default,
                 " )"
             ].join('');
         }
