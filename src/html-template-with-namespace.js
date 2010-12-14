@@ -17,6 +17,18 @@ Namespace('org.yabooo.template')
             origin[prop] = target[prop];
         }
     };
+    var meta = {   
+        '\b': '\\b',
+        '\t': '\\t',
+        '\n': '\\n',
+        '\f': '\\f',
+        '\r': '\\r',
+        '"' : '\\"',
+        '\\': '\\\\'
+    };
+    var quote = function(str) {
+        return '"' + str.split('').map(function(e){return meta[e] ? meta[e] : e ;}).join('') +'"';
+    };
     var GLOBAL_FUNC = {
         __escapeHTML:function(str){
             return str
@@ -26,11 +38,9 @@ Namespace('org.yabooo.template')
                 .replace(/>/g,'&gt;')
                 .replace(/'/g, '&#039;')
                 .replace(/"/g, '&quot;');
-
         },
         __escapeJS:function(str){
-            return JSON.stringify(str);
-            //return Object.toJSON(str);
+            return quote(str);
         },
         __escapeURL:function(str){
             return encodeURI(str);
@@ -39,32 +49,84 @@ Namespace('org.yabooo.template')
             return str;
         },
         __include : function(name,param,func){
-            var tmpl = new HTMLTemplate(name);
+            var tmpl = Klass.getByElementId(name);
+            if( !tmpl ){
+                return;
+            }
             tmpl.param(param);
             tmpl.registerFunction(func);
             return tmpl.output();
         }
     };
-    var HTMLTemplate = function _HTMLTemplate(source){
-        this._source = source;
-        this._param = {};
-        this._funcs = {};merge(this._funcs,GLOBAL_FUNC);
-        var functionBody = ns.getFunctionText( source );
-        this._output =  ns.compileFunctionText( functionBody );
+    var Klass = function _HTMLTemplate(func){
+        this._param  = {};
+        this._funcs  = {};merge(this._funcs,GLOBAL_FUNC);
+        this._output = func;
     };
-    merge( HTMLTemplate.prototype , {
+    merge( Klass.prototype , {
         param : function(obj){
             merge( this._param , obj );
         },
-        registerFunction :function(obj){
-            merge( this._funcs , obj );
+        registerFunction :function(name,func){
+            this._funcs[name] = func;
         },
         output : function(){
-            console.log(this);
             return this._output( this._param , this._funcs );
         }
     } );
+
+    merge( Klass , {
+        cache : {},
+        get : function(source){
+            var uniqId = 'autocache:' + Klass.hashFunction(source);
+            var func = Klass.resolve( uniqId );
+            if( func )
+                return new Klass( func );
+            return new Klass( Klass.reserve( uniqId , source ) );
+        },
+        resolve : function(name){
+            return Klass.cache[name];
+        },
+        reserve : function(name,source){
+            var functionBody = ns.getFunctionText(source);
+            Klass.cache[name] = ns.compileFunctionText(functionBody );
+            return Klass.cache[name];
+        },
+        getByElementId : function(elementId){
+            var uniqId = 'dom:' + elementId;
+            var func   = Klass.resolve( uniqId );
+            if( func ){ return new Klass( func ); }
+            var element = document.getElementById( elementId );
+            if( !element ){ return undefined;}
+
+            var source = Array.prototype.slice.call( element.childNodes || [] )
+                .filter(function(e){ return e.nodeType == Node.COMMENT_NODE })
+                .map(function(e){return e.data;})
+                .join('');
+
+            return new Klass( Klass.reserve( uniqId , source ) );
+        },
+        hashFunction  : function(string){
+            var max = (1 << 31);
+            var length = string.length;
+            var ret    = 34351;
+            var pos    = 'x';
+            for (var i = 0; i < length; i++) {
+                var c = string.charCodeAt(i);
+                ret *= 37;
+                pos ^= c;
+                ret += c;
+                ret %= max;
+            }
+            return ret.toString(16)+'-'+(pos & 0x00ff).toString(16) ;
+        },
+        registerFunction : function(name,func){
+            GLOBAL_FUNC[name] = func;
+        }
+    });
+
+    
     ns.provide({
-        HTMLTemplate : HTMLTemplate
+        HTMLTemplate : Klass
     });
 });
