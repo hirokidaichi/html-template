@@ -1,14 +1,14 @@
 
 
-Namespace('org.yabooo.template.core')
+Namespace('boofy.template.core')
 .define(function(ns){
     var module = { exports : {}};
 //include<src/html-template-core.js>
     ns.provide( module.exports );
 });
 
-Namespace('org.yabooo.template')
-.use('org.yabooo.template.core *')
+Namespace('boofy.template')
+.use('boofy.template.core *')
 .define(function(ns){
     var merge =  function(origin,target){
         for(var prop in target ){
