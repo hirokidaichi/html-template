@@ -191,10 +191,6 @@ element.Base = util.defineClass({
     },
     isParent : util.emptyFunction,
     execute  : util.emptyFunction,
-    isClose  : function() {
-        return this['isCloseTag'] ? true: false;
-    },
-
     getCode: function(e) {
         return "void(0);";
     },
