@@ -93,8 +93,6 @@ var COMPLEX_TMPL =[
     '</p>'
 ].join('\n');
 
-// TODO move tests order if it needs to be done after dom:loaded
-
 test('testVAR', function(){with(this){
     var x = new HTML.Template({type:'text',source:'<TMPL_VAR NAME=test1><TMPL_VAR NAME=test2><TMPL_VAR NAME=test3>'});
     x.param({test1:1,test2:2,test3:3});
