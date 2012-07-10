@@ -1,3 +1,4 @@
+ /*global Prototype Element window document Event $w $$ $H*/
 
 if (!Prototype) throw ('Event.Wrapper require prototype.js');
 
@@ -38,7 +39,7 @@ if(Prototype.Browser.IE)(function() {
         var cache = getEventCache(id,eventName);
         if(cache.length >0){
             eventCache[id][eventName]=cache.without(func);
-            if(eventCache[id][eventName].length == 0){
+            if(eventCache[id][eventName].length === 0){
                 element.detachEvent(
                     'on'+eventName,
                     wrapperCache[id][eventName]
@@ -84,7 +85,7 @@ if (Prototype.Browser.WebKit)(function() {
         if(hash[searchText]){
             return (Object.isFunction(hash[searchText]))?hash[searchText]:Prototype.emptyFunction;
         }else{
-            return (Object.isFunction(hash['_default']))?hash['_default']:Prototype.emptyFunction;
+            return (Object.isFunction(hash._default))?hash._default:Prototype.emptyFunction;
         }
     }
     var firstUnload  = true;
@@ -108,7 +109,7 @@ if (Prototype.Browser.WebKit)(function() {
                     Event._observe(document.body,'DOMNodeInserted', storeCache);
                     Event._observe(window,'load', storeCache);
                     return function() {
-                        var time = (new Date).getTime();
+                        var time = (new Date()).getTime();
                         $H(cache).each(function(e, i) {
                             e.value.name = time + "_" + i;
                         });
@@ -121,7 +122,7 @@ if (Prototype.Browser.WebKit)(function() {
                 return Event._observe(element, name, func);
             }
         },name)();
-    }
+    };
     Object.extend(window, {
         observe: Event.observe.methodize()
     });

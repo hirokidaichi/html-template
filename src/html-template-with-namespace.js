@@ -1,4 +1,4 @@
-
+ /*global Namespace document Node*/
 
 Namespace('boofy.template.core')
 .define(function(ns){
@@ -100,7 +100,7 @@ Namespace('boofy.template')
             if( !element ){ return undefined;}
 
             var source = Array.prototype.slice.call( element.childNodes || [] )
-                .filter(function(e){ return e.nodeType == Node.COMMENT_NODE })
+                .filter(function(e){ return e.nodeType == Node.COMMENT_NODE; })
                 .map(function(e){return e.data;})
                 .join('');
 

@@ -1,3 +1,4 @@
+ /*global Class Ajax $ $A Prototype $H $$ document*/
 
 var HTML = HTML || {};
 
@@ -17,15 +18,15 @@ HTML.Template = Class.create({
         else if ( Object.isElement(option) ){
             return {type:'element',source:option};
         }
-        if (! (option['type'] && option['source'])) {
+        if (! (option.type && option.source)) {
             throw ('option needs {type:~~,source:~~}');
         }
         return option;
     },
     _initUrl:function(source){
         this._source = 'contentUnload';
-        if(this.option['element'] && (Object.isElement(this.option['element']) || this.option['element'] === document )){
-            this.assignElement = this.option['element'];
+        if(this.option.element && (Object.isElement(this.option.element) || this.option.element === document )){
+            this.assignElement = this.option.element;
         }
         this.storedName = "url:"+source;
         if(this.isCompiled && this.assignElement ){
@@ -91,9 +92,9 @@ HTML.Template = Class.create({
         }
     },
     _initLoad:function(){
-        if(!this.option['name']) throw('need name');
-        this._source    = this.option['source'];
-        this.storedName = this.option['name'];
+        if(!this.option.name) throw('need name');
+        this._source    = this.option.source;
+        this.storedName = this.option.name;
         this.compile();
         this.isCompiled = true;
     },
@@ -113,7 +114,7 @@ HTML.Template = Class.create({
             },
             url:function(){
                 var url = segment[1];
-                _self.option['element'] = document;
+                _self.option.element = document;
                 _self._initUrl(url);
             },
             autocache:function(){
@@ -126,9 +127,9 @@ HTML.Template = Class.create({
         this._funcs  = Object.extend({},HTML.Template.GLOBAL_FUNC);
         this.isCompiled = false;
         this.option     = this._guessOption(option);
-        var initializer = this['_init'+this.option['type'].capitalize()];
+        var initializer = this['_init'+this.option.type.capitalize()];
         if( initializer ){
-            initializer.apply(this,[this.option['source']]);
+            initializer.apply(this,[this.option.source]);
         }else{
             throw('invalid type');
         }
