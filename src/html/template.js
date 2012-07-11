@@ -1,12 +1,13 @@
 /*
  * @require ../event/wrapper.js
  */
+/*global Prototype Ajax $ $A Element $H $$ Class document*/
 if (!Prototype) throw ('HTML.Template require prototype.js');
 if (!
     Prototype.Version
     .split('.')
     .zip([1,6,0])
-    .all(function(e){return (parseInt(e[0]) >= (e[1]||0)); })
+    .all(function(e){return (parseInt(e[0],10) >= (e[1]||0)); })
 ){
     throw(new Error('HTML.Template require prototype 1.6.0 or later'));
 }
@@ -28,15 +29,15 @@ HTML.Template = Class.create({
         else if ( Object.isElement(option) ){
             return {type:'element',source:option};
         }
-        if (! (option['type'] && option['source'])) {
+        if (! (option.type && option.source)) {
             throw ('option needs {type:~~,source:~~}');
         }
         return option;
     },
     _initUrl:function(source){
         this._source = 'contentUnload';
-        if(this.option['element'] && (Object.isElement(this.option['element']) || this.option['element'] === document )){
-            this.assignElement = this.option['element'];
+        if(this.option.element && (Object.isElement(this.option.element) || this.option.element === document )){
+            this.assignElement = this.option.element;
         }
         this.storedName = "url:"+source;
         if(this.isCompiled && this.assignElement ){
@@ -102,9 +103,9 @@ HTML.Template = Class.create({
         }
     },
     _initLoad:function(){
-        if(!this.option['name']) throw('need name');
-        this._source    = this.option['source'];
-        this.storedName = this.option['name'];
+        if(!this.option.name) throw('need name');
+        this._source    = this.option.source;
+        this.storedName = this.option.name;
         this.compile();
         this.isCompiled = true;
     },
@@ -124,7 +125,7 @@ HTML.Template = Class.create({
             },
             url:function(){
                 var url = segment[1];
-                _self.option['element'] = document;
+                _self.option.element = document;
                 _self._initUrl(url);
             },
             autocache:function(){
@@ -140,9 +141,9 @@ HTML.Template = Class.create({
         this.isCompiled = false;
         this.isParsed   = false;
         this.option     = this._guessOption(option);
-        var initializer = this['_init'+this.option['type'].capitalize()];
+        var initializer = this['_init'+this.option.type.capitalize()];
         if( initializer ){
-            initializer.apply(this,[this.option['source']]);
+            initializer.apply(this,[this.option.source]);
         }else{
             throw('invalid type');
         }
@@ -237,7 +238,7 @@ HTML.Template = Class.create({
                 var text = source.slice(0, index);
                 chunks.push(createElement('TEXT', text));
                 source = source.slice(index);
-            };
+            }
             var attr,name,value;
             if ( results.attribute_name ) {
                 name  = results.attribute_name.toLowerCase();
@@ -245,7 +246,7 @@ HTML.Template = Class.create({
                 attr  = {};
                 attr[name]      = value;
                 attr['default'] = results['default'];
-                attr['escape']  = results['escape'];
+                attr.escape     = results.escape;
             } else {
                 attr = undefined;
             }
@@ -255,20 +256,21 @@ HTML.Template = Class.create({
                 'parent'    : this
             }));
             source = source.slice(fullText.length);
-        };
+        }
         chunks.push(createElement('ROOT', {
             closeTag: true
         }));
         var l = chunks.length;
         var i = 0;
         var codes = [];
-        for(;i<l;i++){codes.push(chunks[i].getCode());};
+        for(;i<l;i++){codes.push(chunks[i].getCode());}
         this._functionText  = codes.join('\n');
         this.isParsed       = true;
         this._chunks        = chunks;
         return this;
     },
     compile: function() {
+        /*jshint evil: true */
         if (!this.isCompiled) {
             var uniq = this.storedName || this._uniqHash();
             if (HTML.Template.Cache[uniq]) {
@@ -339,7 +341,7 @@ HTML.Template.createMatcher = function(escapeChar,expArray){
         }
         return val;
     });
-    var reg = undefined;
+    var reg;
     regValues.text = _escape(regValues.text.join(''));
 
     return function matcher(matchingText){
@@ -545,12 +547,12 @@ HTML.Template.Element = Class.create({
         } else {
             Object.extend(this,option);
         }
-        this['closeTag'] =(this['closeTag'])? true: false;
+        this.closeTag = (this.closeTag) ? true: false;
     },
     isParent : Prototype.emptyFunction,
     execute  : Prototype.emptyFunction,
     isClose  : function() {
-        return this['closeTag'] ? true: false;
+        return this.closeTag ? true: false;
     },
     inspect: function() {
         return Object.toJSON(this);
@@ -582,22 +584,22 @@ HTML.Template.Element = Class.create({
     },
     getParam: function() {
         var ret = "";
-        if (this.attributes['name']) {
-            var matched = this.attributes['name'].match(/^(\/|(?:\.\.\/)+)(\w+)/);
+        if (this.attributes.name) {
+            var matched = this.attributes.name.match(/^(\/|(?:\.\.\/)+)(\w+)/);
             if(matched){
                 return this._pathLike(matched[2],matched[1]);
             }
             ret =  [
                 "(($_T['"            ,
-                    this.attributes['name'] ,
+                    this.attributes.name ,
                 "']) ? $_T['"        ,
-                    this.attributes['name'] ,
+                    this.attributes.name ,
                 "'] : ",
                     Object.toJSON(this.attributes['default'])  || 'undefined',
                 " )"
             ].join('');
         }
-        if (this.attributes['expr']) {
+        if (this.attributes.expr) {
             var operators = {
                 'gt' :'>',
                 'lt' :'<',
@@ -606,7 +608,7 @@ HTML.Template.Element = Class.create({
                 'ge' :'>=',
                 'le' :'<='
             };
-            var replaced = this.attributes['expr'].replace(/{(\/|(?:\.\.\/)+)(\w+)}/g,function(full,matched,param){
+            var replaced = this.attributes.expr.replace(/\{(\/|(?:\.\.\/)+)(\w+)\}/g,function(full,matched,param){
                 return [
                      '$_C[',
                      (matched == '/')?'0':'$_C.length -'+(matched.split('..').length-1),
@@ -624,7 +626,7 @@ HTML.Template.Element = Class.create({
                 "}}}}).apply($_SELF)"
             ].join('');
         }
-        if(this.attributes['escape']){
+        if(this.attributes.escape){
             var escape = {
                 NONE: 'NONE',
                 0   : 'NONE',
@@ -632,7 +634,7 @@ HTML.Template.Element = Class.create({
                 HTML: 'HTML',
                 JS  : 'JS',
                 URL : 'URL'
-            }[this.attributes['escape']];
+            }[this.attributes.escape];
             ret = [
                 '$_GF.__escape'+escape+'(',
                 ret,
@@ -737,7 +739,7 @@ Object.extend(HTML.Template, {
             if (this.closeTag) {
                 throw(new Error('HTML.Template ParseError'));
             } else {
-                var name = '"'+(this.attributes['name'])+'"';
+                var name = '"'+(this.attributes.name)+'"';
                 return [
                     'if(HTML.Template.Cache['+name+']){',
                     '   var _tmpl = new HTML.Template('+name+');',

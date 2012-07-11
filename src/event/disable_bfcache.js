@@ -3,13 +3,15 @@
  *
  * 
  */
+ /*global Prototype window $w $$ document alert $H Event*/
+
 if (Prototype.Browser.WebKit)(function() {
     Event._observe = Event.observe;
     function _search(hash,searchText){
         if(hash[searchText]){
             return (Object.isFunction(hash[searchText]))?hash[searchText]:Prototype.emptyFunction;
         }else{
-            return (Object.isFunction(hash['_default']))?hash['_default']:Prototype.emptyFunction;
+            return (Object.isFunction(hash._default))?hash._default:Prototype.emptyFunction;
         }
     }
     var firstUnload  = true;
@@ -33,7 +35,7 @@ if (Prototype.Browser.WebKit)(function() {
                     Event._observe(document.body,'DOMNodeInserted', storeCache);
                     Event._observe(window,'load', storeCache);
                     return function() {
-                        var time = (new Date).getTime();
+                        var time = (new Date()).getTime();
                         alert(Object.toJSON($H(cache).keys()));
                         $H(cache).each(function(e, i) {
                             e.value.name = time + "_" + i;
@@ -47,7 +49,7 @@ if (Prototype.Browser.WebKit)(function() {
                 return Event._observe(element, name, func);
             }
         },name)();
-    }
+    };
     Object.extend(window, {
         observe: Event.observe.methodize()
     });
