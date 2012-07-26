@@ -1,4 +1,5 @@
 
+/*global require:false console:false*/
 var template = require('../src/html-template-core');
 
 var COMPLEX_TMPL =[
@@ -31,6 +32,6 @@ console.log(f1({
     name : "nodeTemplate",
     loop : [
         {case1 : false,case2 : false,case3 : true  },
-        {case1 : false,case2 : false,case3 : false },
+        {case1 : false,case2 : false,case3 : false }
     ]
 }));
